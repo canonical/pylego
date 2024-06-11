@@ -13,7 +13,7 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/kayra1/lepy"
+Homepage = "https://github.com/canonical/lepy"
 
 [build-system]
 requires = ["setuptools>=61.0"]
