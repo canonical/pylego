@@ -1,4 +1,4 @@
-module github.com/kayra1/lepy
+module github.com/canonical/lepy
 
 go 1.22.1
 
