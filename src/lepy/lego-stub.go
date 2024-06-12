@@ -1,7 +1,7 @@
 package main
 
+import "C"
 import (
-	"C"
 	"encoding/json"
 	"fmt"
 	"unicode/utf16"
@@ -17,7 +17,7 @@ type LegoArgs struct {
 }
 
 //export RunLegoCommand
-func RunLegoCommand(message *C.wchar_t) int {
+func RunLegoCommand(message *C.wchar_t) *C.char {
 	var goMessage []uint16
 	for ptr := uintptr(unsafe.Pointer(message)); ; ptr += unsafe.Sizeof(C.wchar_t(0)) {
 		wchar := *(*C.wchar_t)(unsafe.Pointer(ptr))
@@ -33,7 +33,8 @@ func RunLegoCommand(message *C.wchar_t) int {
 		fmt.Println("cli args failed validation", err.Error())
 	}
 	fmt.Println(CLIArgs)
-	return 0
+	return_message_ptr := C.CString("csrstr")
+	return return_message_ptr
 }
 
 func main() {}
