@@ -14,7 +14,7 @@ def build_go_library():
     os.chdir("../..")
 
 
-class build_py(build_py_orig):  # noqa: N801
+class BuildPy(build_py_orig):
     """Build requirements for the package."""
 
     def run(self):
@@ -23,4 +23,4 @@ class build_py(build_py_orig):  # noqa: N801
         super().run()
 
 
-setup(cmdclass={"build_py": build_py})
+setup(cmdclass={"build_py": BuildPy})

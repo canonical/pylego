@@ -29,6 +29,7 @@ func RunLegoCommand(message *C.wchar_t) int {
 		goMessage = append(goMessage, uint16(wchar))
 	}
 	jsonStr := string(utf16.Decode(goMessage))
+
 	var CLIArgs LegoArgs
 	if err := json.Unmarshal([]byte(jsonStr), &CLIArgs); err != nil {
 		fmt.Println("cli args failed validation", err.Error())
