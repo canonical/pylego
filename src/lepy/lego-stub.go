@@ -2,8 +2,6 @@ package main
 
 import (
 	"C"
-)
-import (
 	"encoding/json"
 	"fmt"
 	"unicode/utf16"
