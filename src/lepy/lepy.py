@@ -9,7 +9,7 @@ so_file = here / ("lego.so")
 library = ctypes.cdll.LoadLibrary(so_file)
 
 
-def run_lego_command(email: str, server: str, csr: str, plugin: str, env: dict[str, str]) -> str:
+def run_lego_command(email: str, server: str, csr: bytes, plugin: str, env: dict[str, str]) -> str:
     """Run an arbitrary command in the Lego application. Read more at https://go-acme.github.io.
 
     Args:
@@ -27,7 +27,7 @@ def run_lego_command(email: str, server: str, csr: str, plugin: str, env: dict[s
             {
                 "email": email,
                 "server": server,
-                "csr": csr,
+                "csr": csr.decode(),
                 "plugin": plugin,
                 "env": env,
             }
