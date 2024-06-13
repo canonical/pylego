@@ -20,16 +20,19 @@ def run_lego_command(email: str, server: str, csr: str, plugin: str, env: dict[s
         env: the environment variables required for the chosen plugin.
     """
     library.RunLegoCommand.restype = ctypes.c_char_p
-    library.RunLegoCommand.argtypes = [ctypes.c_wchar_p]
+    library.RunLegoCommand.argtypes = [ctypes.c_char_p]
 
-    message = json.dumps(
-        {
-            "email": email,
-            "server": server,
-            "csr": csr,
-            "plugin": plugin,
-            "env": env,
-        }
+    message = bytes(
+        json.dumps(
+            {
+                "email": email,
+                "server": server,
+                "csr": csr,
+                "plugin": plugin,
+                "env": env,
+            }
+        ),
+        "utf-8",
     )
     cert: bytes = library.RunLegoCommand(message)
-    print(cert)
+    print(cert.decode("utf-8"))
