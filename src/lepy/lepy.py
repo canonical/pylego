@@ -18,8 +18,9 @@ class Metadata:
 @dataclass
 class LEGOResponse:
     csr: str
-    certificate: str
     private_key: str
+    certificate: str
+    issuer_certificate: str
     metadata: Metadata
 
 def run_lego_command(email: str, server: str, csr: bytes, plugin: str, env: dict[str, str]) -> str:
