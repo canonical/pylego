@@ -23,7 +23,7 @@ class LEGOResponse:
     issuer_certificate: str
     metadata: Metadata
 
-def run_lego_command(email: str, server: str, csr: bytes, plugin: str, env: dict[str, str]) -> str:
+def run_lego_command(email: str, server: str, csr: bytes, plugin: str, env: dict[str, str]) -> LEGOResponse:
     """Run an arbitrary command in the Lego application. Read more at https://go-acme.github.io.
 
     Args:
