@@ -19,7 +19,7 @@ import os
 def test_given_request_certificate_when_request_sent_then_certificate_issued():
     filename = os.path.join(os.path.dirname(__file__), 'test_files/test.csr')
     test_csr = open(filename).read().encode()
-    response = run_lego_command("something@gmail.com", "localhost:14000", test_csr, "httpreq", {})
+    response = run_lego_command("something@nowhere.com", "localhost:14000", test_csr, "httpreq", {})
     
     assert response.error == None
     assert response.metadata.domain == 'localhost'
