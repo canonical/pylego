@@ -6,23 +6,40 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"log"
 
 	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/go-acme/lego/v4/certificate"
 	"github.com/go-acme/lego/v4/challenge/http01"
+	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/go-acme/lego/v4/lego"
 	"github.com/go-acme/lego/v4/registration"
 )
 
-type LegoArgs struct {
+type LegoInputArgs struct {
 	Email  string `json:"email"`
 	Server string `json:"server"`
 	CSR    string `json:"csr"`
 	Plugin string `json:"plugin"`
 	Env    map[string]interface{}
+}
+
+type LegoOutputResponse struct {
+	CSR               string `json:"csr"`
+	PrivateKey        string `json:"private_key"`
+	Certificate       string `json:"certificate"`
+	IssuerCertificate string `json:"issuer_certificate"`
+	Metadata          `json:"metadata"`
+}
+
+type Metadata struct {
+	StableURL string `json:"stable_url"`
+	URL       string `json:"url"`
+	Domain    string `json:"domain"`
 }
 
 type LetsEncryptUser struct {
@@ -44,7 +61,7 @@ func (u *LetsEncryptUser) GetPrivateKey() crypto.PrivateKey {
 //export RunLegoCommand
 func RunLegoCommand(message *C.char) *C.char {
 	goStrMessage := C.GoString(message)
-	var CLIArgs LegoArgs
+	var CLIArgs LegoInputArgs
 	if err := json.Unmarshal([]byte(goStrMessage), &CLIArgs); err != nil {
 		log.Fatal("cli args failed validation", err.Error())
 	}
@@ -79,10 +96,10 @@ func RunLegoCommand(message *C.char) *C.char {
 	if err != nil {
 		log.Fatal("couldn't set http01 provider server", err)
 	}
-	// err = client.Challenge.SetTLSALPN01Provider(tlsalpn01.NewProviderServer("", "5001"))
-	// if err != nil {
-	// 	log.Fatal("couldn't set tlsalpn01 provider", err)
-	// }
+	err = client.Challenge.SetTLSALPN01Provider(tlsalpn01.NewProviderServer("", "5001"))
+	if err != nil {
+		log.Fatal("couldn't set tlsalpn01 provider", err)
+	}
 
 	// New users will need to register
 	reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
@@ -91,20 +108,47 @@ func RunLegoCommand(message *C.char) *C.char {
 	}
 	user.Registration = reg
 
-	request := certificate.ObtainRequest{
-		Domains: []string{"test.com"},
-		Bundle:  true,
+	// request := certificate.ObtainRequest{
+	// 	Domains: []string{"localhost"},
+	// 	Bundle:  true,
+	// }
+	block, _ := pem.Decode([]byte(CLIArgs.CSR))
+	if block == nil || block.Type != "CERTIFICATE REQUEST" {
+		log.Fatalf("Failed to decode PEM block containing certificate request")
 	}
-	certificates, err := client.Certificate.Obtain(request)
+	csr, err := x509.ParseCertificateRequest(block.Bytes)
+	if err != nil {
+		log.Fatalf("Failed to parse certificate request: %v", err)
+	}
+
+	request := certificate.ObtainForCSRRequest{
+		CSR:    csr,
+		Bundle: true,
+	}
+	certificates, err := client.Certificate.ObtainForCSR(request)
 	if err != nil {
 		log.Fatal("coudn't obtain cert: ", err)
 	}
 
 	// Each certificate comes back with the cert bytes, the bytes of the client's
-	// private key, and a certificate URL. SAVE THESE TO DISK.
-	fmt.Printf("%#v\n", certificates)
+	// private key, and a certificate URL
+	response_message := LegoOutputResponse{
+		CSR:               string(certificates.CSR),
+		PrivateKey:        string(certificates.PrivateKey),
+		Certificate:       string(certificates.Certificate),
+		IssuerCertificate: string(certificates.IssuerCertificate),
+		Metadata: Metadata{
+			StableURL: certificates.CertStableURL,
+			URL:       certificates.CertURL,
+			Domain:    certificates.Domain,
+		},
+	}
 
-	return_message_ptr := C.CString("--cert string--")
+	response_json, err := json.Marshal(response_message)
+	if err != nil {
+		log.Fatal("coudn't build response message: ", err)
+	}
+	return_message_ptr := C.CString(string(response_json))
 	return return_message_ptr
 }
 

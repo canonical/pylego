@@ -2,12 +2,25 @@
 
 import ctypes
 import json
+from dataclasses import dataclass
 from pathlib import Path
 
 here = Path(__file__).absolute().parent
 so_file = here / ("lego.so")
 library = ctypes.cdll.LoadLibrary(so_file)
 
+@dataclass
+class Metadata:
+    stable_url: str
+    url: str
+    domain: str
+
+@dataclass
+class LEGOResponse:
+    csr: str
+    certificate: str
+    private_key: str
+    metadata: Metadata
 
 def run_lego_command(email: str, server: str, csr: bytes, plugin: str, env: dict[str, str]) -> str:
     """Run an arbitrary command in the Lego application. Read more at https://go-acme.github.io.
@@ -34,5 +47,6 @@ def run_lego_command(email: str, server: str, csr: bytes, plugin: str, env: dict
         ),
         "utf-8",
     )
-    cert: bytes = library.RunLegoCommand(message)
-    print(cert.decode("utf-8"))
+    result: bytes = library.RunLegoCommand(message)
+    return LEGOResponse(**json.loads(result.decode("utf-8")))
+
