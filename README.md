@@ -29,7 +29,7 @@ run_lego_command("something@gmail.com", "https://localhost/directory", "-----BEG
 | `env`    | The env is a dictionary mapping of strings to strings that will be loaded into the environment for LEGO to use. All plugins require some configuration values loaded into the environment. You can find them [here](https://go-acme.github.io/lego/dns/) |
 
 
-On top of the environment variables that LEGO support, we have some extra ones that we use to configure the library
+On top of the environment variables that LEGO supports, we have some extra ones that we use to configure the library:
 
 | Key | Description |
 | --- | ----------- |
