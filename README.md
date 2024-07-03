@@ -24,6 +24,6 @@ The output binary, `lego.so`, is installed alongside lepy, and lepy exposes a py
 
 On `pip install`, setuptools attempts to build this binary by running the command
 ```
-go build -o lego.so -buildmode=c-shared lego-stub.go
+go build -o lego.so -buildmode=c-shared lego.go
 ```
 If we don't have a .whl that supports your environment, you will need to have Go installed and configured for Python to be able to build this binary.

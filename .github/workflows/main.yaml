@@ -1,0 +1,37 @@
+name: main
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  tests:
+    runs-on: ubuntu-22.04
+    steps:
+        - name: checkout
+          uses: actions/checkout@v4
+        - name: install letsencrypt/pebble
+          run: |
+            sudo snap install go --classic
+
+            cd tests/integration
+            git clone https://github.com/letsencrypt/pebble.git
+            cd pebble
+            git reset ad9e5bba53b05abd18ee896434226db85a391285
+            go install ./cmd/pebble
+            cd ../../..
+
+        - name: run test
+          run: |
+
+            pip install --upgrade pip
+            pip install pytest
+            pip install .
+
+            export PATH=~/go/bin:$PATH
+
+            pytest
