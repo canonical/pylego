@@ -40,7 +40,11 @@ class TestLepy:
             "https://localhost:14000/dir",
             configure_acme_server.get("csr"),
             "http",
-            {"SSL_CERT_FILE": configure_acme_server.get("ca_path")},
+            {
+                "SSL_CERT_FILE": configure_acme_server.get("ca_path"),
+                "HTTP01_PORT": "5002",
+                "TLSALPN01_PORT": "5001",
+            },
         )
         assert response.metadata.domain == "localhost"
 

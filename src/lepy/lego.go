@@ -130,11 +130,11 @@ func requestCertificate(email, server, csr, plugin string) (*LegoOutputResponse,
 func configureClientChallenges(client *lego.Client, plugin string) error {
 	switch plugin {
 	case "http":
-		err := client.Challenge.SetHTTP01Provider(http01.NewProviderServer("", "5002"))
+		err := client.Challenge.SetHTTP01Provider(http01.NewProviderServer(os.Getenv("HTTP01_URL"), os.Getenv("HTTP01_PORT")))
 		if err != nil {
 			return errors.Join(errors.New("couldn't set http01 provider server"), err)
 		}
-		err = client.Challenge.SetTLSALPN01Provider(tlsalpn01.NewProviderServer("", "5001"))
+		err = client.Challenge.SetTLSALPN01Provider(tlsalpn01.NewProviderServer(os.Getenv("TLSALPN01_URL"), os.Getenv("TLSALPN01_PORT")))
 		if err != nil {
 			return errors.Join(errors.New("couldn't set tlsalpn01 provider server"), err)
 		}
