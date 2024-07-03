@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  tests:
+  cicd:
     runs-on: ubuntu-22.04
     steps:
         - name: checkout

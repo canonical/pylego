@@ -42,13 +42,13 @@ class TestLepy:
             "http",
             {"SSL_CERT_FILE": configure_acme_server.get("ca_path")},
         )
-        assert response.metadata.get("domain") == "localhost"
+        assert response.metadata.domain == "localhost"
 
 
 def poll_server(url: str, freq: int = 1):
     while True:
         try:
-            time.sleep(1)
+            time.sleep(freq)
             response = requests.get(url, verify=False)
             return response
         except requests.RequestException as e:

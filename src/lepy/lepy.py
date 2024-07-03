@@ -31,7 +31,7 @@ class LEGOResponse:
 
 
 class LEGOError(Exception):
-    """For errors that are returned from LEGO."""
+    """Exceptions that are returned from the LEGO Go library."""
 
 
 def run_lego_command(
@@ -64,4 +64,5 @@ def run_lego_command(
     result: bytes = library.RunLegoCommand(message)
     if result.startswith(b"error:"):
         raise LEGOError(result.decode())
-    return LEGOResponse(**json.loads(result.decode("utf-8")))
+    result_dict = json.loads(result.decode("utf-8"))
+    return LEGOResponse(**{**result_dict, "metadata": Metadata(**result_dict.get("metadata"))})
