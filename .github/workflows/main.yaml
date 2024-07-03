@@ -25,13 +25,17 @@ jobs:
             go install ./cmd/pebble
             cd ../../..
 
-        - name: run test
+        - name: install lepy
           run: |
 
             pip install --upgrade pip
-            pip install pytest
-            pip install .
+            pip install ".[test]"
 
+        - name: lint
+          run: |
+            ruff check
+
+        - name: test
+          run: |
             export PATH=~/go/bin:$PATH
-
             pytest

@@ -14,7 +14,8 @@ classifiers = [
 
 [project.optional-dependencies]
 test = [
-    "pytest"
+    "pytest",
+    "ruff"
 ]
 
 [project.urls]
