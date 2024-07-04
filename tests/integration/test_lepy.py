@@ -48,12 +48,12 @@ class TestLepy:
 
 
 def poll_server(url: str, freq: int = 1, timeout: int = 60):
-    while True:
-        timeout -= freq
+    while timeout > 0:
         try:
             time.sleep(freq)
             response = requests.get(url, verify=False)
             return response
         except requests.RequestException as e:
             print(e)
-            pass
+        timeout -= freq
+    raise TimeoutError("Timed out waiting for pebble to become responsive")
