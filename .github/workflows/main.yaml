@@ -15,23 +15,21 @@ jobs:
         - name: checkout
           uses: actions/checkout@v4
         - name: install letsencrypt/pebble
+          working-directory: tests/integration
           run: |
             sudo snap install go --classic
 
-            cd tests/integration
             git clone https://github.com/letsencrypt/pebble.git
             cd pebble
             git reset ad9e5bba53b05abd18ee896434226db85a391285
             go install ./cmd/pebble
-            cd ../../..
 
         - name: install lepy
           run: |
-
             pip install --upgrade pip
             pip install ".[test]"
 
-        - name: lint
+        - name: lint python
           run: |
             ruff check
 
