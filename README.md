@@ -34,9 +34,9 @@ On top of the environment variables that LEGO supports, we have some extra ones 
 | Key | Description |
 | --- | ----------- |
 | `SSL_CERT_FILE`   | Path to a CA certificate file for lepy to trust. This can be used for trusting the certificate of the ACME server provided. |
-| `HTTP01_URL`      | The interface to be used for the HTTP01 challenge if the plugin is chosen. Any interface by default. |
+| `HTTP01_IFACE`    | The interface to be used for the HTTP01 challenge if the plugin is chosen. Any interface by default. |
 | `HTTP01_PORT`     | The port to be used for the HTTP01 challenge if the plugin is chosen. 80 by default.|
-| `TLSALPN01_ULR`   | The interface to be used for the TLSALPN01 challenge if the plugin is chosen. Any interface by default. |
+| `TLSALPN01_IFACE` | The interface to be used for the TLSALPN01 challenge if the plugin is chosen. Any interface by default. |
 | `TLSALPN01_PORT`  | The port to be used for the TLSALPN01 challenge if the plugin is chosen. 443 by default. |
 
 ## How does it work?
