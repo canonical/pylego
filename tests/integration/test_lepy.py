@@ -12,7 +12,6 @@ def configure_acme_server():
     """Get and install pebble, a lightweight ACME server from letsencrypt."""
     tests_dir = os.path.dirname(__file__)
 
-    # Install and run pebble
     subprocess.check_call(["go", "install", "./cmd/pebble"], cwd=os.path.join(tests_dir, "pebble"))
     pebble = subprocess.Popen(
         ["pebble", "-config", "test/config/pebble-config.json"],
@@ -36,11 +35,10 @@ class TestLepy:
         configure_acme_server,
     ):
         response = run_lego_command(
-            "something@nowhere.com",
-            "https://localhost:14000/dir",
-            configure_acme_server.get("csr"),
-            "http",
-            {
+            email="something@nowhere.com",
+            server="https://localhost:14000/dir",
+            csr=configure_acme_server.get("csr"),
+            env={
                 "SSL_CERT_FILE": configure_acme_server.get("ca_path"),
                 "HTTP01_PORT": "5002",
                 "TLSALPN01_PORT": "5001",
@@ -49,8 +47,9 @@ class TestLepy:
         assert response.metadata.domain == "localhost"
 
 
-def poll_server(url: str, freq: int = 1):
+def poll_server(url: str, freq: int = 1, timeout: int = 60):
     while True:
+        timeout -= freq
         try:
             time.sleep(freq)
             response = requests.get(url, verify=False)

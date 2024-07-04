@@ -35,7 +35,7 @@ class LEGOError(Exception):
 
 
 def run_lego_command(
-    email: str, server: str, csr: bytes, plugin: str, env: dict[str, str]
+    email: str, server: str, csr: bytes, env: dict[str, str], plugin: str = ""
 ) -> LEGOResponse:
     """Run an arbitrary command in the Lego application. Read more at https://go-acme.github.io.
 

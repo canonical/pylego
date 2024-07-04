@@ -51,7 +51,10 @@ func RunLegoCommand(message *C.char) *C.char {
 		return C.CString(fmt.Sprint("error: couldn't extract arguments: ", err))
 	}
 	for k, v := range CLIArgs.Env {
-		os.Setenv(k, v)
+		if err := os.Setenv(k, v); err != nil {
+			return C.CString(fmt.Sprint("error: couldn't load environment variables: ", err))
+		}
+
 	}
 	certificate, err := requestCertificate(CLIArgs.Email, CLIArgs.Server, CLIArgs.CSR, CLIArgs.Plugin)
 	if err != nil {
@@ -76,11 +79,9 @@ func requestCertificate(email, server, csr, plugin string) (*LegoOutputResponse,
 	}
 	config := lego.NewConfig(&user)
 
-	// This CA URL is configured for a local dev instance of Boulder running in Docker in a VM.
 	config.CADirURL = server
 	config.Certificate.KeyType = certcrypto.RSA2048
 
-	// A client facilitates communication with the CA server.
 	client, err := lego.NewClient(config)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't create lego client: %s", err)
@@ -129,14 +130,14 @@ func requestCertificate(email, server, csr, plugin string) (*LegoOutputResponse,
 
 func configureClientChallenges(client *lego.Client, plugin string) error {
 	switch plugin {
-	case "http":
+	case "":
 		err := client.Challenge.SetHTTP01Provider(http01.NewProviderServer(os.Getenv("HTTP01_URL"), os.Getenv("HTTP01_PORT")))
 		if err != nil {
-			return errors.Join(errors.New("couldn't set http01 provider server"), err)
+			return errors.Join(errors.New("couldn't set http01 provider server: "), err)
 		}
 		err = client.Challenge.SetTLSALPN01Provider(tlsalpn01.NewProviderServer(os.Getenv("TLSALPN01_URL"), os.Getenv("TLSALPN01_PORT")))
 		if err != nil {
-			return errors.Join(errors.New("couldn't set tlsalpn01 provider server"), err)
+			return errors.Join(errors.New("couldn't set tlsalpn01 provider server: "), err)
 		}
 	default:
 		dnsProvider, err := dns.NewDNSChallengeProviderByName(plugin)
@@ -170,7 +171,7 @@ func (u *LetsEncryptUser) GetPrivateKey() crypto.PrivateKey {
 func extractArguments(jsonMessage string) (LegoInputArgs, error) {
 	var CLIArgs LegoInputArgs
 	if err := json.Unmarshal([]byte(jsonMessage), &CLIArgs); err != nil {
-		return CLIArgs, errors.Join(errors.New("cli args failed validation"), err)
+		return CLIArgs, errors.Join(errors.New("cli args failed validation: "), err)
 	}
 	return CLIArgs, nil
 }
