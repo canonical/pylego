@@ -2,6 +2,7 @@
 
 import ctypes
 import json
+from dataclasses import dataclass
 from pathlib import Path
 
 here = Path(__file__).absolute().parent
@@ -9,7 +10,33 @@ so_file = here / ("lego.so")
 library = ctypes.cdll.LoadLibrary(so_file)
 
 
-def run_lego_command(email: str, server: str, csr: bytes, plugin: str, env: dict[str, str]) -> str:
+@dataclass
+class Metadata:
+    """Extra information returned by the ACME server."""
+
+    stable_url: str
+    url: str
+    domain: str
+
+
+@dataclass
+class LEGOResponse:
+    """The class that lego returns when issuing certificates correctly."""
+
+    csr: str
+    private_key: str
+    certificate: str
+    issuer_certificate: str
+    metadata: Metadata
+
+
+class LEGOError(Exception):
+    """Exceptions that are returned from the LEGO Go library."""
+
+
+def run_lego_command(
+    email: str, server: str, csr: bytes, env: dict[str, str], plugin: str = ""
+) -> LEGOResponse:
     """Run an arbitrary command in the Lego application. Read more at https://go-acme.github.io.
 
     Args:
@@ -34,5 +61,8 @@ def run_lego_command(email: str, server: str, csr: bytes, plugin: str, env: dict
         ),
         "utf-8",
     )
-    cert: bytes = library.RunLegoCommand(message)
-    print(cert.decode("utf-8"))
+    result: bytes = library.RunLegoCommand(message)
+    if result.startswith(b"error:"):
+        raise LEGOError(result.decode())
+    result_dict = json.loads(result.decode("utf-8"))
+    return LEGOResponse(**{**result_dict, "metadata": Metadata(**result_dict.get("metadata"))})
