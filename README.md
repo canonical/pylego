@@ -53,3 +53,9 @@ go build -o lego.so -buildmode=c-shared lego.go
 ```
 
 If we don't have a .whl that supports your environment, you will need to have Go installed and configured for Python to be able to build this binary.
+
+## License
+
+The `Lego` library used in this project is licensed under the [MIT License](https://github.com/go-acme/lego/blob/master/LICENSE).
+
+`lepy` itself is licensed under the [Apache License, Version 2.0](./LICENSE).
