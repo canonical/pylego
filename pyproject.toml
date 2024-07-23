@@ -4,12 +4,16 @@ version = "0.1.0"
 authors = [
   { name="Ghislain Bourgeois", email="ghislain.bourgeois@canonical.com" },
   { name="Kayra Gemalmaz", email="kayra.gemalmaz@canonical.com" },
+  { name="Daniel Arndt", email="daniel.arndt@canonical.com" },
+  { name="Guillaume Belanger", email="guillaume.belanger@canonical.com" },
 ]
 description = "A python wrapper package for the lego application written in Golang"
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
 ]
 
 [project.optional-dependencies]
@@ -20,6 +24,7 @@ test = [
 
 [project.urls]
 Homepage = "https://github.com/canonical/lepy"
+Issues = "https://github.com/canonical/lepy/issues"
 
 [build-system]
 requires = ["setuptools>=61.0"]
