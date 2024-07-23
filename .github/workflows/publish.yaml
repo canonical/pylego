@@ -11,25 +11,25 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.x"
+          python-version: "3.8"
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          python3 -m pip install --upgrade pip
           pip install setuptools wheel twine
 
       - name: Build package
         run: |
-          python setup.py sdist bdist_wheel
+          python3 setup.py sdist bdist_wheel
 
       - name: Publish package to PyPI
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          python -m twine upload dist/*
+          python3 -m twine upload dist/*
