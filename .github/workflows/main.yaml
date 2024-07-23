@@ -1,4 +1,4 @@
-name: main
+name: Main workflow
 
 on:
   pull_request:
@@ -9,31 +9,5 @@ on:
       - main
 
 jobs:
-  cicd:
-    runs-on: ubuntu-22.04
-    steps:
-        - name: checkout
-          uses: actions/checkout@v4
-        - name: install letsencrypt/pebble
-          working-directory: tests/integration
-          run: |
-            sudo snap install go --classic
-
-            git clone https://github.com/letsencrypt/pebble.git
-            cd pebble
-            git reset ad9e5bba53b05abd18ee896434226db85a391285
-            go install ./cmd/pebble
-
-        - name: install lepy
-          run: |
-            pip install --upgrade pip
-            pip install ".[test]"
-
-        - name: lint python
-          run: |
-            ruff check
-
-        - name: test
-          run: |
-            export PATH=~/go/bin:$PATH
-            pytest
+  test:
+    uses: ./.github/workflows/test-package.yaml
