@@ -1,5 +1,5 @@
 [project]
-name = "lepy"
+name = "pylego"
 version = "0.1.0"
 authors = [
   { name="Ghislain Bourgeois", email="ghislain.bourgeois@canonical.com" },
@@ -23,8 +23,8 @@ test = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/canonical/lepy"
-Issues = "https://github.com/canonical/lepy/issues"
+Homepage = "https://github.com/canonical/pylego"
+Issues = "https://github.com/canonical/pylego/issues"
 
 [build-system]
 requires = ["setuptools>=61.0"]
@@ -37,7 +37,7 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-lepy = ["lego.so"]
+pylego = ["lego.so"]
 
 # Linting tools configuration
 [tool.ruff]
