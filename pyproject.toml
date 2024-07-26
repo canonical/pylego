@@ -1,12 +1,8 @@
 [project]
 name = "pylego"
-version = "0.1.0"
+version = "0.1.2"
 authors = [
-  { name="Ghislain Bourgeois", email="ghislain.bourgeois@canonical.com" },
-  { name="Kayra Gemalmaz", email="kayra.gemalmaz@canonical.com" },
-  { name="Daniel Arndt", email="daniel.arndt@canonical.com" },
-  { name="Guillaume Belanger", email="guillaume.belanger@canonical.com" },
-  { name="Yazan Salti", email="yazan.salti@canonical.com" },
+  { name="Canonical", email="telco-engineers@lists.canonical.com" },
 ]
 description = "A python wrapper package for the lego application written in Golang"
 readme = "README.md"

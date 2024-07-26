@@ -25,6 +25,7 @@ jobs:
 
       - name: Build package
         run: |
+          python3 setup.py build_py
           python3 setup.py sdist bdist_wheel
 
       - name: Publish package to PyPI
@@ -32,7 +33,7 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          OUTPUT=$(python3 -m twine upload dist/* 2>&1) || true
+          OUTPUT=$(python3 -m twine upload dist/* 2>&1)
           if echo "$OUTPUT" | grep -q "File already exists"; then
             echo "Package version already exists. Skipping further steps."
             exit 0
