@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ${{ github.ref == 'refs/heads/main' && format('ignore-main-{0}', github.run_id) || format('{0}-{1}', github.workflow, github.ref_name) }}
+  cancel-in-progress: true
+
 jobs:
   test:
     uses: ./.github/workflows/test-package.yaml
