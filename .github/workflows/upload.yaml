@@ -32,4 +32,11 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          python3 -m twine upload dist/*
+          OUTPUT=$(python3 -m twine upload dist/* 2>&1) || true
+          if echo "$OUTPUT" | grep -q "File already exists"; then
+            echo "Package version already exists. Skipping further steps."
+            exit 0
+          else
+            echo "$OUTPUT"
+            exit 1
+          fi
