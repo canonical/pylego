@@ -1,4 +1,4 @@
-name: Test the Lepy package
+name: Test the pylego package
 
 on:
   workflow_call:
@@ -19,7 +19,7 @@ jobs:
           git reset ad9e5bba53b05abd18ee896434226db85a391285
           go install ./cmd/pebble
 
-      - name: install lepy
+      - name: install pylego
         run: |
           pip install --upgrade pip
           pip install ".[test]"

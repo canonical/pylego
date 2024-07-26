@@ -1,6 +1,6 @@
-module github.com/canonical/lepy
+module github.com/canonical/pylego
 
-go 1.22.1
+go 1.22.5
 
 require github.com/go-acme/lego/v4 v4.17.4
 

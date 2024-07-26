@@ -4,7 +4,7 @@ import time
 
 import pytest
 import requests
-from lepy import run_lego_command
+from pylego import run_lego_command
 
 
 @pytest.fixture(scope="session")
@@ -29,7 +29,7 @@ def configure_acme_server():
     pebble.terminate()
 
 
-class TestLepy:
+class TestPyLego:
     def test_given_request_certificate_when_request_sent_then_certificate_issued(
         self,
         configure_acme_server,
