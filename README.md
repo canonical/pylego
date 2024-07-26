@@ -1,6 +1,6 @@
-# lepy
+# pylego
 
-lepy is a python extension package to utilize the certificate management application [Lego](https://github.com/go-acme/lego) written in Golang in python.
+pylego is a python extension package to utilize the certificate management application [Lego](https://github.com/go-acme/lego) written in Golang in python.
 
 ## Installation
 
@@ -17,7 +17,7 @@ in your preferred Python venv.
 You can import the lego command and run any function that you can run from the CLI:
 
 ```python
-from lepy import run_lego_command
+from pylego import run_lego_command
 test_env = {"NAMECHEAP_API_USER": "user", "NAMECHEAP_API_KEY": "key"}
 run_lego_command("something@gmail.com", "https://localhost/directory", "-----BEGIN CERTIFICATE REQUEST----- ...", "namecheap", test_env)
 ```
@@ -32,19 +32,19 @@ run_lego_command("something@gmail.com", "https://localhost/directory", "-----BEG
 
 On top of the environment variables that LEGO supports, we have some extra ones that we use to configure the library:
 
-| Key               | Description                                                                                                                 |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `SSL_CERT_FILE`   | Path to a CA certificate file for lepy to trust. This can be used for trusting the certificate of the ACME server provided. |
-| `HTTP01_IFACE`    | The interface to be used for the HTTP01 challenge if the plugin is chosen. Any interface by default.                        |
-| `HTTP01_PORT`     | The port to be used for the HTTP01 challenge if the plugin is chosen. 80 by default.                                        |
-| `TLSALPN01_IFACE` | The interface to be used for the TLSALPN01 challenge if the plugin is chosen. Any interface by default.                     |
-| `TLSALPN01_PORT`  | The port to be used for the TLSALPN01 challenge if the plugin is chosen. 443 by default.                                    |
+| Key               | Description                                                                                                                   |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `SSL_CERT_FILE`   | Path to a CA certificate file for pylego to trust. This can be used for trusting the certificate of the ACME server provided. |
+| `HTTP01_IFACE`    | The interface to be used for the HTTP01 challenge if the plugin is chosen. Any interface by default.                          |
+| `HTTP01_PORT`     | The port to be used for the HTTP01 challenge if the plugin is chosen. 80 by default.                                          |
+| `TLSALPN01_IFACE` | The interface to be used for the TLSALPN01 challenge if the plugin is chosen. Any interface by default.                       |
+| `TLSALPN01_PORT`  | The port to be used for the TLSALPN01 challenge if the plugin is chosen. 443 by default.                                      |
 
 ## How does it work?
 
-Golang supports building a shared c library from its CLI build tool. We import and use the LEGO application from GoLang, and provide a stub with C bindings so that the shared C binary we produce exposes a C API for other programs to import and utilize. Lepy then uses the [ctypes](https://docs.python.org/3/library/ctypes.html) standard library in python to load this binary, and make calls to its methods.
+Golang supports building a shared c library from its CLI build tool. We import and use the LEGO application from GoLang, and provide a stub with C bindings so that the shared C binary we produce exposes a C API for other programs to import and utilize. pylego then uses the [ctypes](https://docs.python.org/3/library/ctypes.html) standard library in python to load this binary, and make calls to its methods.
 
-The output binary, `lego.so`, is installed alongside lepy, and lepy exposes a python function called run_lego_command that will convert the arguments into a JSON message, and send it to LEGO.
+The output binary, `lego.so`, is installed alongside pylego, and pylego exposes a python function called run_lego_command that will convert the arguments into a JSON message, and send it to LEGO.
 
 On `pip install`, setuptools attempts to build this binary by running the command
 
@@ -58,4 +58,4 @@ If we don't have a .whl that supports your environment, you will need to have Go
 
 The `Lego` library used in this project is licensed under the [MIT License](https://github.com/go-acme/lego/blob/master/LICENSE).
 
-`lepy` itself is licensed under the [Apache License, Version 2.0](./LICENSE).
+`pylego` itself is licensed under the [Apache License, Version 2.0](./LICENSE).

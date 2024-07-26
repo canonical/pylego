@@ -162,6 +162,6 @@ cython_debug/
 .idea/
 .vscode
 
-src/lepy/*.h
-src/lepy/*.so
+src/pylego/*.h
+src/pylego/*.so
 tests/integration/pebble
