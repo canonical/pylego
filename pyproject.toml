@@ -6,6 +6,7 @@ authors = [
   { name="Kayra Gemalmaz", email="kayra.gemalmaz@canonical.com" },
   { name="Daniel Arndt", email="daniel.arndt@canonical.com" },
   { name="Guillaume Belanger", email="guillaume.belanger@canonical.com" },
+  { name="Yazan Salti", email="yazan.salti@canonical.com" },
 ]
 description = "A python wrapper package for the lego application written in Golang"
 readme = "README.md"
