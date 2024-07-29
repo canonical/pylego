@@ -1,14 +1,14 @@
 name: Publish Python Package
 
 on:
-  push:
-    branches:
-      - main
+  workflow_call:
+    secrets:
+      PYPI_API_TOKEN:
+        required: true
 
 jobs:
-  build:
+  upload-package:
     runs-on: ubuntu-latest
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -33,11 +33,9 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          OUTPUT=$(python3 -m twine upload dist/* 2>&1)
+          OUTPUT=$(python3 -m twine upload --verbose dist/* 2>&1)
           if echo "$OUTPUT" | grep -q "File already exists"; then
             echo "Package version already exists. Skipping further steps."
             exit 0
-          else
-            echo "$OUTPUT"
-            exit 1
           fi
+          echo "$OUTPUT"
