@@ -38,4 +38,5 @@ jobs:
             echo "Package version already exists. Skipping further steps."
             exit 0
           fi
+          echo "Something has happened"
           echo "$OUTPUT"

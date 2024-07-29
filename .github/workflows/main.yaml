@@ -18,6 +18,5 @@ jobs:
   upload-package:
     needs:
       - test
-    if: ${{ github.ref_name == 'main' }}
     uses: ./.github/workflows/upload.yaml
     secrets: inherit
