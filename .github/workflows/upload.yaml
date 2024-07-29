@@ -33,10 +33,12 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
+          echo "Something has happened 1"
           OUTPUT=$(python3 -m twine upload --verbose dist/* 2>&1)
+          echo "Something has happened 2"
           if echo "$OUTPUT" | grep -q "File already exists"; then
             echo "Package version already exists. Skipping further steps."
             exit 0
           fi
-          echo "Something has happened"
+          echo "Something has happened 3"
           echo "$OUTPUT"
