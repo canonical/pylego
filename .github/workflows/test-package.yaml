@@ -18,20 +18,17 @@ jobs:
           cd pebble
           git reset ad9e5bba53b05abd18ee896434226db85a391285
           go install ./cmd/pebble
-      - name: check version bump
+      - name: check version
         id: vbump
         uses: rgryta/Check-Bump@main
         with:
           method: 'toml'
           prefix: 'v'
-      - name: was-not-bumped
+      - name: check version bump
         if: steps.vbump.outputs.bump == 'false'
         run: |
-          echo "I was NOT bumped. version: ${{ steps.vbump.outputs.version }}"
-      - name: was-bumped
-        if: steps.vbump.outputs.bump == 'true'
-        run: |
-          echo "I was bumped. version: ${{ steps.vbump.outputs.version }}"
+          echo "The project version was NOT bumped. version: ${{ steps.vbump.outputs.version }}"
+          exit 1
       - name: install pylego
         run: |
           pip install --upgrade pip
