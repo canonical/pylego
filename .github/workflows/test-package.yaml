@@ -9,15 +9,6 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
-      - name: install letsencrypt/pebble
-        working-directory: tests/integration
-        run: |
-          sudo snap install go --classic
-
-          git clone https://github.com/letsencrypt/pebble.git
-          cd pebble
-          git reset ad9e5bba53b05abd18ee896434226db85a391285
-          go install ./cmd/pebble
       - name: check version
         id: vbump
         uses: rgryta/Check-Bump@main
@@ -29,6 +20,15 @@ jobs:
         run: |
           echo "The project version was NOT bumped. version: ${{ steps.vbump.outputs.version }}"
           exit 1
+      - name: install letsencrypt/pebble
+        working-directory: tests/integration
+        run: |
+          sudo snap install go --classic
+
+          git clone https://github.com/letsencrypt/pebble.git
+          cd pebble
+          git reset ad9e5bba53b05abd18ee896434226db85a391285
+          go install ./cmd/pebble
       - name: install pylego
         run: |
           pip install --upgrade pip
