@@ -1,0 +1,18 @@
+name: Test building the package
+on:
+    workflow_call:
+
+jobs:
+  sdist:
+    runs-on: ubuntu-22.04
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+    - name: install venv
+      run: python -m venv .venv
+    - name: install Python dependencies
+      run: .venv/bin/pip install -U pip build
+    - name: make sdist
+      run: .venv/bin/python -m build --sdist
+    - name: make bdist_wheel
+      run: .venv/bin/python -m build --wheel

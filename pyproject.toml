@@ -1,6 +1,6 @@
 [project]
 name = "pylego"
-version = "0.1.4"
+version = "0.1.5"
 authors = [
   { name="Canonical", email="telco-engineers@lists.canonical.com" },
 ]
@@ -15,6 +15,7 @@ classifiers = [
 
 [project.optional-dependencies]
 test = [
+    "build",
     "pytest",
     "requests",
     "ruff"
@@ -33,9 +34,6 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-[tool.setuptools.package-data]
-pylego = ["lego.so"]
 
 # Linting tools configuration
 [tool.ruff]
