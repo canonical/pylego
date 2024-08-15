@@ -9,6 +9,17 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
+      - name: check version
+        id: vbump
+        uses: rgryta/Check-Bump@main
+        with:
+          method: 'toml'
+          prefix: 'v'
+      - name: check version bump
+        if: steps.vbump.outputs.bump == 'false'
+        run: |
+          echo "The project version was NOT bumped. version: ${{ steps.vbump.outputs.version }}"
+          exit 1
       - name: install letsencrypt/pebble
         working-directory: tests/integration
         run: |
@@ -18,16 +29,13 @@ jobs:
           cd pebble
           git reset ad9e5bba53b05abd18ee896434226db85a391285
           go install ./cmd/pebble
-
       - name: install pylego
         run: |
           pip install --upgrade pip
           pip install ".[test]"
-
       - name: lint python
         run: |
           ruff check
-
       - name: test
         run: |
           export PATH=~/go/bin:$PATH
