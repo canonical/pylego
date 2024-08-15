@@ -24,15 +24,21 @@ jobs:
         with:
           method: 'toml'
           prefix: 'v'
+      - name: was-not-bumped
+        if: steps.vbump.outputs.bump == 'false'
+        run: |
+          echo "I was NOT bumped. version: ${{ steps.vbump.outputs.version }}"
+      - name: was-bumped
+        if: steps.vbump.outputs.bump == 'true'
+        run: |
+          echo "I was bumped. version: ${{ steps.vbump.outputs.version }}"
       - name: install pylego
         run: |
           pip install --upgrade pip
           pip install ".[test]"
-
       - name: lint python
         run: |
           ruff check
-
       - name: test
         run: |
           export PATH=~/go/bin:$PATH
