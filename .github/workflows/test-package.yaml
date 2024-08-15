@@ -7,6 +7,12 @@ jobs:
   test:
     runs-on: ubuntu-22.04
     steps:
+      - name: check version bump
+        id: vbump
+        uses: rgryta/Check-Bump@main
+        with:
+          method: 'toml'
+          prefix: 'v'
       - name: checkout
         uses: actions/checkout@v4
       - name: install letsencrypt/pebble
