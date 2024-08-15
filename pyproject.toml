@@ -15,7 +15,6 @@ classifiers = [
 
 [project.optional-dependencies]
 test = [
-    "build",
     "pytest",
     "requests",
     "ruff"
@@ -34,6 +33,9 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+pylego = ["lego.so", "lego.go", "go.mod", "go.sum"]
 
 # Linting tools configuration
 [tool.ruff]
