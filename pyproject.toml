@@ -16,6 +16,7 @@ classifiers = [
 [project.optional-dependencies]
 test = [
     "pytest",
+    "requests",
     "ruff"
 ]
 
