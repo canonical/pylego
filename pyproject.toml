@@ -1,6 +1,6 @@
 [project]
 name = "pylego"
-version = "0.1.4"
+version = "0.1.5"
 authors = [
   { name="Canonical", email="telco-engineers@lists.canonical.com" },
 ]
@@ -35,7 +35,7 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-pylego = ["lego.so"]
+pylego = ["lego.so", "lego.go", "go.mod", "go.sum"]
 
 # Linting tools configuration
 [tool.ruff]

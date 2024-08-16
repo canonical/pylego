@@ -13,11 +13,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  test-package:
     uses: ./.github/workflows/test-package.yaml
+  test-build:
+    uses: ./.github/workflows/build-package.yaml
   upload-package:
     needs:
-      - test
+      - test-package
+      - test-build
     if: ${{ github.ref_name == 'main' }}
     uses: ./.github/workflows/upload.yaml
     secrets: inherit
