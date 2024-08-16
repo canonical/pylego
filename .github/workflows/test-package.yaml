@@ -9,6 +9,9 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
+      - name: lint python
+        run: |
+          ruff check
       - name: check version
         id: vbump
         uses: rgryta/Check-Bump@main
@@ -33,9 +36,6 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install ".[test]"
-      - name: lint python
-        run: |
-          ruff check --fix
       - name: test
         run: |
           export PATH=~/go/bin:$PATH
