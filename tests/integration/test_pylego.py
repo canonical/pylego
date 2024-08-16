@@ -32,7 +32,7 @@ def configure_acme_server():
 class TestPyLego:
     def test_given_request_certificate_when_request_sent_then_certificate_issued(
         self,
-        configure_acme_server,
+        configure_acme_server: dict[str, str | bytes],
     ):
         response = run_lego_command(
             email="something@nowhere.com",
