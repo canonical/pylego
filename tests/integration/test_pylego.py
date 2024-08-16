@@ -4,6 +4,7 @@ import time
 
 import pytest
 import requests
+
 from pylego import run_lego_command
 
 
