@@ -35,7 +35,7 @@ jobs:
           pip install ".[test]"
       - name: lint python
         run: |
-          ruff check
+          ruff check --fix
       - name: test
         run: |
           export PATH=~/go/bin:$PATH
