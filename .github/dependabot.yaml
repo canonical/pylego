@@ -12,7 +12,7 @@ updates:
           - "*"
 
   - package-ecosystem: "gomod"
-    directory: "/"
+    directory: "/src/pylego"
     schedule:
       interval: "weekly"
     commit-message:
