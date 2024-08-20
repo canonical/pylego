@@ -1,6 +1,6 @@
 module github.com/canonical/pylego
 
-go 1.22.5
+go 1.23
 
 require github.com/go-acme/lego/v4 v4.17.4
 
