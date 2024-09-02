@@ -2,7 +2,7 @@ module github.com/canonical/pylego
 
 go 1.23
 
-require github.com/go-acme/lego/v4 v4.17.4
+require github.com/go-acme/lego/v4 v4.18.0
 
 require (
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
@@ -64,7 +64,7 @@ require (
 	github.com/go-resty/resty/v2 v2.11.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.0.0 // indirect
 	github.com/goccy/go-json v0.10.3 // indirect
-	github.com/gofrs/flock v0.8.1 // indirect
+	github.com/gofrs/flock v0.10.0 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
@@ -142,7 +142,7 @@ require (
 	github.com/transip/gotransip/v6 v6.23.0 // indirect
 	github.com/ultradns/ultradns-go-sdk v1.6.1-20231103022937-8589b6a // indirect
 	github.com/vinyldns/go-vinyldns v0.9.16 // indirect
-	github.com/vultr/govultr/v2 v2.17.2 // indirect
+	github.com/vultr/govultr/v3 v3.9.0 // indirect
 	github.com/yandex-cloud/go-genproto v0.0.0-20240318083951-4fe6125f286e // indirect
 	github.com/yandex-cloud/go-sdk v0.0.0-20240318084659-dfa50323a0b4 // indirect
 	go.opencensus.io v0.24.0 // indirect
