@@ -22,7 +22,7 @@ import (
 	"github.com/go-acme/lego/v4/registration"
 )
 
-type LegoInputArgs struct {
+type RequestCertificateInputArgs struct {
 	Email  string `json:"email"`
 	Server string `json:"server"`
 	CSR    string `json:"csr"`
@@ -30,12 +30,17 @@ type LegoInputArgs struct {
 	Env    map[string]string
 }
 
-type LegoOutputResponse struct {
+type RequestCertificateOutputResponse struct {
 	CSR               string `json:"csr"`
 	PrivateKey        string `json:"private_key"`
 	Certificate       string `json:"certificate"`
 	IssuerCertificate string `json:"issuer_certificate"`
 	Metadata          `json:"metadata"`
+}
+
+type ValidateDNSProviderInputArgs struct {
+	PluginName    string            `json:"plugin_name"`
+	PluginOptions map[string]string `json:"plugin_options"`
 }
 
 type Metadata struct {
@@ -44,19 +49,19 @@ type Metadata struct {
 	Domain    string `json:"domain"`
 }
 
-//export RunLegoCommand
-func RunLegoCommand(message *C.char) *C.char {
-	CLIArgs, err := extractArguments(C.GoString(message))
+//export RequestCertificate
+func RequestCertificate(message *C.char) *C.char {
+	args, err := extractRequestCertificateArguments(C.GoString(message))
 	if err != nil {
 		return C.CString(fmt.Sprint("error: couldn't extract arguments: ", err))
 	}
-	for k, v := range CLIArgs.Env {
+	for k, v := range args.Env {
 		if err := os.Setenv(k, v); err != nil {
 			return C.CString(fmt.Sprint("error: couldn't load environment variables: ", err))
 		}
 
 	}
-	certificate, err := requestCertificate(CLIArgs.Email, CLIArgs.Server, CLIArgs.CSR, CLIArgs.Plugin)
+	certificate, err := requestCertificate(args.Email, args.Server, args.CSR, args.Plugin)
 	if err != nil {
 		return C.CString(fmt.Sprint("error: couldn't request certificate: ", err))
 	}
@@ -68,7 +73,26 @@ func RunLegoCommand(message *C.char) *C.char {
 	return return_message_ptr
 }
 
-func requestCertificate(email, server, csr, plugin string) (*LegoOutputResponse, error) {
+//export ValidateDNSProvider
+func ValidateDNSProvider(message *C.char) *C.char {
+	args, err := extractValidateDNSPluginArguments(C.GoString(message))
+	if err != nil {
+		return C.CString(fmt.Sprint("error: couldn't extract arguments: ", err))
+	}
+	for k, v := range args.PluginOptions {
+		if err := os.Setenv(k, v); err != nil {
+			return C.CString(fmt.Sprint("error: couldn't load environment variables: ", err))
+		}
+	}
+	_, err = dns.NewDNSChallengeProviderByName(args.PluginName)
+	if err != nil {
+		return C.CString(fmt.Sprint("error: couldn't validate provider: ", err))
+	}
+	return_message_ptr := C.CString(string(""))
+	return return_message_ptr
+}
+
+func requestCertificate(email, server, csr, plugin string) (*RequestCertificateOutputResponse, error) {
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't generate priv key: %s", err)
@@ -115,7 +139,7 @@ func requestCertificate(email, server, csr, plugin string) (*LegoOutputResponse,
 		return nil, fmt.Errorf("coudn't obtain cert: %s", err)
 	}
 
-	return &LegoOutputResponse{
+	return &RequestCertificateOutputResponse{
 		CSR:               string(certificates.CSR),
 		PrivateKey:        string(certificates.PrivateKey),
 		Certificate:       string(certificates.Certificate),
@@ -168,12 +192,20 @@ func (u *LetsEncryptUser) GetPrivateKey() crypto.PrivateKey {
 	return u.key
 }
 
-func extractArguments(jsonMessage string) (LegoInputArgs, error) {
-	var CLIArgs LegoInputArgs
-	if err := json.Unmarshal([]byte(jsonMessage), &CLIArgs); err != nil {
-		return CLIArgs, errors.Join(errors.New("cli args failed validation: "), err)
+func extractRequestCertificateArguments(jsonMessage string) (RequestCertificateInputArgs, error) {
+	var args RequestCertificateInputArgs
+	if err := json.Unmarshal([]byte(jsonMessage), &args); err != nil {
+		return args, errors.Join(errors.New("request args failed validation: "), err)
 	}
-	return CLIArgs, nil
+	return args, nil
+}
+
+func extractValidateDNSPluginArguments(jsonMessage string) (ValidateDNSProviderInputArgs, error) {
+	var args ValidateDNSProviderInputArgs
+	if err := json.Unmarshal([]byte(jsonMessage), &args); err != nil {
+		return args, errors.Join(errors.New("request args failed validation: "), err)
+	}
+	return args, nil
 }
 
 func main() {}

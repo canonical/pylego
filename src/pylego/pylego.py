@@ -20,7 +20,7 @@ class Metadata:
 
 
 @dataclass
-class LEGOResponse:
+class RequestCertificateResponse:
     """The class that lego returns when issuing certificates correctly."""
 
     csr: str
@@ -30,14 +30,14 @@ class LEGOResponse:
     metadata: Metadata
 
 
-class LEGOError(Exception):
+class RequestCertificateError(Exception):
     """Exceptions that are returned from the LEGO Go library."""
 
 
-def run_lego_command(
+def request_certificate(
     email: str, server: str, csr: bytes, env: dict[str, str], plugin: str = ""
-) -> LEGOResponse:
-    """Run an arbitrary command in the Lego application. Read more at https://go-acme.github.io.
+) -> RequestCertificateResponse:
+    """Request a certificate from a given server using the LEGO acme library. Read more at https://go-acme.github.io.
 
     Args:
         email: the email to be used for registration
@@ -46,8 +46,8 @@ def run_lego_command(
         plugin: which DNS provider plugin to use for the request. Find yours at https://go-acme.github.io/lego/dns/.
         env: the environment variables required for the chosen plugin.
     """
-    library.RunLegoCommand.restype = ctypes.c_char_p
-    library.RunLegoCommand.argtypes = [ctypes.c_char_p]
+    library.RequestCertificate.restype = ctypes.c_char_p
+    library.RequestCertificate.argtypes = [ctypes.c_char_p]
 
     message = bytes(
         json.dumps(
@@ -61,8 +61,28 @@ def run_lego_command(
         ),
         "utf-8",
     )
-    result: bytes = library.RunLegoCommand(message)
+    result: bytes = library.RequestCertificate(message)
     if result.startswith(b"error:"):
-        raise LEGOError(result.decode())
+        raise RequestCertificateError(result.decode())
     result_dict = json.loads(result.decode("utf-8"))
-    return LEGOResponse(**{**result_dict, "metadata": Metadata(**result_dict.get("metadata"))})
+    return RequestCertificateResponse(
+        **{**result_dict, "metadata": Metadata(**result_dict.get("metadata"))}
+    )
+
+
+def validate_dns_plugin(plugin_name: str, plugin_options: dict[str, str]) -> str:
+    """Validate the options that will be used for the plugin.
+
+    Args:
+        plugin_name: the name of the chosen plugin to be validated
+        plugin_options: the options that will be validated
+    """
+    library.ValidateDNSProvider.restype = ctypes.c_char_p
+    library.ValidateDNSProvider.argtypes = [ctypes.c_char_p]
+
+    message = bytes(
+        json.dumps({"plugin_name": plugin_name, "plugin_options": plugin_options}),
+        "utf-8",
+    )
+    result: bytes = library.ValidateDNSProvider(message)
+    return result.decode()
