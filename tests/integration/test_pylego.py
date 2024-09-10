@@ -5,7 +5,7 @@ import time
 import pytest
 import requests
 
-from pylego import run_lego_command
+from pylego import request_certificate, validate_dns_plugin
 
 
 @pytest.fixture(scope="session")
@@ -35,7 +35,7 @@ class TestPyLego:
         self,
         configure_acme_server: dict[str, str | bytes],
     ):
-        response = run_lego_command(
+        response = request_certificate(
             email="something@nowhere.com",
             server="https://localhost:14000/dir",
             csr=configure_acme_server.get("csr"),
@@ -46,6 +46,23 @@ class TestPyLego:
             },
         )
         assert response.metadata.domain == "localhost"
+
+    @pytest.mark.parametrize(
+        "input_args,expected_output",
+        [
+            ({"plugin_name": "nonexistentplugin", "plugin_options": {"api": "key"}}, "error: couldn't validate provider: unrecognized DNS provider: nonexistentplugin"),
+            ({"plugin_name": "route53", "plugin_options": {}}, ""),
+            ({"plugin_name": "route53", "plugin_options": {"api": "key"}}, ""),
+            ({"plugin_name": "route53", "plugin_options": {"REAL_VALUE??": "key"}}, ""),
+        ],
+    )
+    def test_given_plugin_data_when_validated_then_expected_response_returned(
+        self, input_args, expected_output
+    ):
+        plugin_name = input_args.get("plugin_name", "")
+        plugin_options = input_args.get("plugin_options", "")
+        response = validate_dns_plugin(plugin_name, plugin_options)
+        assert response == expected_output
 
 
 def poll_server(url: str, freq: int = 1, timeout: int = 60):

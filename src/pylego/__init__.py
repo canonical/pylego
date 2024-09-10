@@ -1,1 +1,6 @@
-from .pylego import LEGOError, LEGOResponse, run_lego_command  # noqa: F401, D104
+from .pylego import (  # noqa: F401, D104
+    RequestCertificateError,
+    RequestCertificateResponse,
+    request_certificate,
+    validate_dns_plugin,
+)
