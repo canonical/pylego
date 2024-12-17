@@ -2,10 +2,16 @@ name: Test the pylego package
 
 on:
   workflow_call:
+    outputs:
+      src_changed:
+        description: "Indicates if source files have changed"
+        value: ${{ jobs.test.outputs.src_changed }}
 
 jobs:
   test:
     runs-on: ubuntu-22.04
+    outputs:
+      src_changed: ${{ steps.changed-files.outputs.src_changed }}
     steps:
       - name: checkout
         uses: actions/checkout@v4
@@ -29,14 +35,30 @@ jobs:
         run: |
           export PATH=~/go/bin:$PATH
           pytest
+      - name: List changed files
+        id: changed-files
+        run: |
+          files=$(gh pr view ${{ github.event.pull_request.number }} --json files --jq '.files[].path' || true)
+          echo "Files changed:"
+          echo "$files"
+          if echo "$files" | grep -q "^src/"; then
+            echo "src_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "src_changed=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: check version
+        if: steps.changed-files.outputs.src_changed == 'true'
         id: vbump
         uses: rgryta/Check-Bump@main
         with:
-          method: 'toml'
-          prefix: 'v'
+          method: "toml"
+          prefix: "v"
+
       - name: check version bump
-        if: steps.vbump.outputs.bump == 'false'
+        if: steps.changed-files.outputs.src_changed == 'true' && steps.vbump.outputs.bump == 'false'
         run: |
           echo "The project version was NOT bumped. version: ${{ steps.vbump.outputs.version }}"
           exit 1
