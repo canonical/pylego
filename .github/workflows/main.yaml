@@ -21,6 +21,6 @@ jobs:
     needs:
       - test-package
       - test-build
-    if: ${{ github.ref_name == 'main' }}
+    if: ${{ github.ref_name == 'main' && contains(github.event.head_commit.modified, 'src/') }}
     uses: ./.github/workflows/upload.yaml
     secrets: inherit

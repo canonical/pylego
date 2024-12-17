@@ -30,13 +30,14 @@ jobs:
           export PATH=~/go/bin:$PATH
           pytest
       - name: check version
+        if: contains(github.event.pull_request.files.*.path, 'src/')
         id: vbump
         uses: rgryta/Check-Bump@main
         with:
-          method: 'toml'
-          prefix: 'v'
+          method: "toml"
+          prefix: "v"
       - name: check version bump
-        if: steps.vbump.outputs.bump == 'false'
+        if: contains(github.event.pull_request.files.*.path, 'src/') && steps.vbump.outputs.bump == 'false'
         run: |
           echo "The project version was NOT bumped. version: ${{ steps.vbump.outputs.version }}"
           exit 1
