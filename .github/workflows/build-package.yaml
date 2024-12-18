@@ -8,11 +8,7 @@ jobs:
     steps:
     - name: checkout
       uses: actions/checkout@v4
-    - name: install venv
-      run: python -m venv .venv
-    - name: install Python dependencies
-      run: .venv/bin/pip install -U pip build
-    - name: make sdist
-      run: .venv/bin/python -m build --sdist
-    - name: make bdist_wheel
-      run: .venv/bin/python -m build --wheel
+    - name: Install uv
+      run: sudo snap install --classic astral-uv
+    - name: Build package
+      run: uv build

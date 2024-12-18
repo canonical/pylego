@@ -26,15 +26,15 @@ jobs:
           go install ./cmd/pebble
       - name: install pylego
         run: |
-          pip install --upgrade pip
-          pip install ".[test]"
+          sudo snap install --classic astral-uv
+          uv sync --dev 
       - name: lint python
         run: |
-          ruff check
+          uv run ruff check
       - name: test
         run: |
           export PATH=~/go/bin:$PATH
-          pytest
+          uv run pytest
       - name: List changed files
         id: changed-files
         run: |
