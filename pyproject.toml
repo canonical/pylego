@@ -13,8 +13,8 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-[project.optional-dependencies]
-test = [
+[dependency-groups]
+dev = [
     "pytest",
     "requests",
     "ruff"
@@ -73,3 +73,6 @@ per-file-ignores = {"tests/*" = ["D100","D101","D102","D103","D104"]}
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
+
+[tool.uv]
+package = true

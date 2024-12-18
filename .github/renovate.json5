@@ -12,7 +12,7 @@
   platformAutomerge: true,
   schedule: ["after 1am and before 3am every monday"],
   timezone: "Etc/UTC",
-  enabledManagers: ["github-actions", "gomod"],
+  enabledManagers: ["github-actions", "gomod", "pep621"],
   packageRules: [
     {
       matchManagers: ["github-actions"],
@@ -24,6 +24,11 @@
       matchPaths: ["src/pylego/**"],
       groupName: "go_dependencies",
       commitMessagePrefix: "chore: ",
+    },
+    {
+      "matchManagers": ["pep621"],
+      "rangeStrategy": "bump",
+      "groupName": "Python dependencies"
     },
   ],
   postUpgradeTasks: {

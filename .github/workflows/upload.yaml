@@ -20,20 +20,18 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python3 -m pip install --upgrade pip
-          pip install setuptools wheel twine
+          sudo snap install --classic astral-uv
 
       - name: Build package
         run: |
-          python3 setup.py build_py
-          python3 setup.py sdist bdist_wheel
+          uv build
 
       - name: Publish package to PyPI
         env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+          UV_PUBLISH_TOKEN: __token__
+          UV_PUBLISH_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          OUTPUT=$(python3 -m twine upload --verbose dist/* 2>&1) || true
+          OUTPUT=$(uv publish) || true
           if echo "$OUTPUT" | grep -q "File already exists"; then
             echo "Package version already exists. Skipping further steps."
             exit 0
