@@ -1,34 +1,48 @@
 {
-  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: [
-    "config:recommended",
-    ":disableRateLimiting",
-    ":noUnscheduledUpdates",
-    ":semanticCommits",
+    'config:recommended',
+    ':disableRateLimiting',
+    ':noUnscheduledUpdates',
+    ':semanticCommits',
   ],
   automerge: true,
-  automergeStrategy: "squash",
-  automergeType: "pr",
+  automergeStrategy: 'squash',
+  automergeType: 'pr',
   platformAutomerge: true,
-  schedule: ["after 1am and before 3am every monday"],
-  timezone: "Etc/UTC",
-  enabledManagers: ["github-actions", "gomod", "pep621"],
+  schedule: [
+    'after 1am and before 3am on monday',
+  ],
+  timezone: 'Etc/UTC',
+  enabledManagers: [
+    'github-actions',
+    'gomod',
+    'pep621',
+  ],
   packageRules: [
     {
-      matchManagers: ["github-actions"],
-      groupName: "github_actions",
-      commitMessagePrefix: "chore: ",
+      matchManagers: [
+        'github-actions',
+      ],
+      groupName: 'github_actions',
+      commitMessagePrefix: 'chore: ',
     },
     {
-      matchManagers: ["gomod"],
-      matchPaths: ["src/pylego/**"],
-      groupName: "go_dependencies",
-      commitMessagePrefix: "chore: ",
+      matchManagers: [
+        'gomod',
+      ],
+      matchFileNames: [
+        'src/pylego/**',
+      ],
+      groupName: 'go_dependencies',
+      commitMessagePrefix: 'chore: ',
     },
     {
-      "matchManagers": ["pep621"],
-      "rangeStrategy": "bump",
-      "groupName": "Python dependencies"
+      matchManagers: [
+        'pep621',
+      ],
+      rangeStrategy: 'bump',
+      groupName: 'Python dependencies',
     },
   ],
   postUpgradeTasks: {
@@ -37,7 +51,9 @@
       "new_version=$(echo $current_version | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')",
       'sed -i "s/^version = \\".*\\"/version = \\"$new_version\\"/" pyproject.toml',
     ],
-    fileFilters: ["pyproject.toml"],
-    executionMode: "update",
+    fileFilters: [
+      'pyproject.toml',
+    ],
+    executionMode: 'update',
   },
 }
