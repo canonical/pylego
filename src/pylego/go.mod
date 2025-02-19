@@ -2,7 +2,7 @@ module github.com/canonical/pylego
 
 go 1.23
 
-require github.com/go-acme/lego/v4 v4.18.0
+require github.com/go-acme/lego/v4 v4.22.2
 
 require (
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
