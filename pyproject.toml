@@ -1,6 +1,6 @@
 [project]
 name = "pylego"
-version = "0.1.9"
+version = "0.1.10"
 authors = [
   { name="Canonical", email="telco-engineers@lists.canonical.com" },
 ]
