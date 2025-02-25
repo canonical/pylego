@@ -45,15 +45,5 @@
       groupName: 'Python dependencies',
     },
   ],
-  postUpgradeTasks: {
-    commands: [
-      "current_version=$(grep '^version = ' pyproject.toml | sed 's/version = \"\\(.*\\)\"/\\1/')",
-      "new_version=$(echo $current_version | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')",
-      'sed -i "s/^version = \\".*\\"/version = \\"$new_version\\"/" pyproject.toml',
-    ],
-    fileFilters: [
-      'pyproject.toml',
-    ],
-    executionMode: 'update',
-  },
+  bumpVersion: "patch",
 }
