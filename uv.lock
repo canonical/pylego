@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.8"
 
 [[package]]
@@ -165,7 +166,7 @@ wheels = [
 
 [[package]]
 name = "pylego"
-version = "0.1.9"
+version = "0.1.11"
 source = { editable = "." }
 
 [package.dev-dependencies]
