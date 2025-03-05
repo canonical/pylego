@@ -1,6 +1,6 @@
 [project]
 name = "pylego"
-version = "0.1.9"
+version = "0.1.11"
 authors = [
   { name="Canonical", email="telco-engineers@lists.canonical.com" },
 ]
@@ -13,8 +13,8 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-[project.optional-dependencies]
-test = [
+[dependency-groups]
+dev = [
     "pytest",
     "requests",
     "ruff"
@@ -25,7 +25,7 @@ Homepage = "https://github.com/canonical/pylego"
 Issues = "https://github.com/canonical/pylego/issues"
 
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=75.8.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
@@ -73,3 +73,6 @@ per-file-ignores = {"tests/*" = ["D100","D101","D102","D103","D104"]}
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
+
+[tool.uv]
+package = true
