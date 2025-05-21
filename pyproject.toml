@@ -1,12 +1,12 @@
 [project]
 name = "pylego"
-version = "0.1.22"
+version = "0.1.23"
 authors = [
   { name="Canonical", email="telco-engineers@lists.canonical.com" },
 ]
 description = "A python wrapper package for the lego application written in Golang"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.13.3"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
@@ -25,7 +25,7 @@ Homepage = "https://github.com/canonical/pylego"
 Issues = "https://github.com/canonical/pylego/issues"
 
 [build-system]
-requires = ["setuptools>=80.7.1"]
+requires = ["setuptools>=80.8.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
