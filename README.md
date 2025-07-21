@@ -19,16 +19,17 @@ You can import the lego command and run any function that you can run from the C
 ```python
 from pylego import run_lego_command
 test_env = {"NAMECHEAP_API_USER": "user", "NAMECHEAP_API_KEY": "key"}
-run_lego_command("something@gmail.com", "https://localhost/directory", "-----BEGIN CERTIFICATE REQUEST----- ...", "namecheap", test_env)
+run_lego_command("something@gmail.com", "https://localhost/directory", "-----BEGIN CERTIFICATE REQUEST----- ...", "namecheap", test_env, "-----BEGIN RSA PRIVATE KEY-----")
 ```
 
 | Argument | Description                                                                                                                                                                                                                                                  |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `email`  | The provided email will be registered to LetsEncrypt. It may receive some emails notifying the user about certificate expiry.                                                                                                                                |
+| `email`  | The provided email will be registered to the ACME server. It may receive some emails notifying the user about certificate expiry.                                                                                                                                |
 | `server` | This is the full URL of a server that implements the ACME protocol. While letsencrypt is the most common one, there are other programs that provide this facility like Vault.                                                                                |
 | `csr`    | This must be a PEM string in bytes that is user generated and valid as according to the ACME server that is being provided above. Many providers have different requirements for what is allowed to be in the fields of the CSR.                             |
 | `plugin` | The plugin is a string that's supported by LEGO. The full list is located [here](https://go-acme.github.io/lego/dns/). On top of the LEGO provided ones, we have an extra plugin called `http` that will allow users to use HTTP01 and TLSALPN01 challenges. |
 | `env`    | The env is a dictionary mapping of strings to strings that will be loaded into the environment for LEGO to use. All plugins require some configuration values loaded into the environment. You can find them [here](https://go-acme.github.io/lego/dns/)     |
+| `private_key`    | The provided private key will be used to register the user to the ACME server, if not provided pylego will generate a new one  |
 
 On top of the environment variables that LEGO supports, we have some extra ones that we use to configure the library:
 
