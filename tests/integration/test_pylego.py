@@ -44,6 +44,7 @@ class TestPyLego:
                 "HTTP01_PORT": "5002",
                 "TLSALPN01_PORT": "5001",
             },
+            private_key="whatever private key",
         )
         assert response.metadata.domain == "localhost"
 
