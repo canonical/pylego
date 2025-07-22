@@ -29,7 +29,7 @@ run_lego_command("something@gmail.com", "https://localhost/directory", "-----BEG
 | `csr`    | This must be a PEM string in bytes that is user generated and valid as according to the ACME server that is being provided above. Many providers have different requirements for what is allowed to be in the fields of the CSR.                             |
 | `plugin` | The plugin is a string that's supported by LEGO. The full list is located [here](https://go-acme.github.io/lego/dns/). On top of the LEGO provided ones, we have an extra plugin called `http` that will allow users to use HTTP01 and TLSALPN01 challenges. |
 | `env`    | The env is a dictionary mapping of strings to strings that will be loaded into the environment for LEGO to use. All plugins require some configuration values loaded into the environment. You can find them [here](https://go-acme.github.io/lego/dns/)     |
-| `private_key`    | The provided private key will be used to register the user to the ACME server, if not provided pylego will generate a new one  |
+| `private_key`    | The provided private key will be used to register the user to the ACME server (not the key that signed the CSR), if not provided pylego will generate a new one  |
 
 On top of the environment variables that LEGO supports, we have some extra ones that we use to configure the library:
 

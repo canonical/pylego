@@ -45,7 +45,8 @@ def run_lego_command(
         csr: the csr to be signed
         plugin: which DNS provider plugin to use for the request. Find yours at https://go-acme.github.io/lego/dns/.
         env: the environment variables required for the chosen plugin.
-        private_key: the private key to be used for the request. If not provided, a new one will be generated.
+        private_key: the private key to be used for the registration on the ACME server (not the private key used to sign the CSR).
+            If not provided, a new one will be generated.
     """
     library.RunLegoCommand.restype = ctypes.c_char_p
     library.RunLegoCommand.argtypes = [ctypes.c_char_p]
