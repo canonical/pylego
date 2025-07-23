@@ -23,11 +23,12 @@ import (
 )
 
 type LegoInputArgs struct {
-	Email  string `json:"email"`
-	Server string `json:"server"`
-	CSR    string `json:"csr"`
-	Plugin string `json:"plugin"`
-	Env    map[string]string
+	Email      string `json:"email"`
+	PrivateKey string `json:"private_key,omitempty"`
+	Server     string `json:"server"`
+	CSR        string `json:"csr"`
+	Plugin     string `json:"plugin"`
+	Env        map[string]string
 }
 
 type LegoOutputResponse struct {
@@ -56,7 +57,7 @@ func RunLegoCommand(message *C.char) *C.char {
 		}
 
 	}
-	certificate, err := requestCertificate(CLIArgs.Email, CLIArgs.Server, CLIArgs.CSR, CLIArgs.Plugin)
+	certificate, err := requestCertificate(CLIArgs.Email, CLIArgs.PrivateKey, CLIArgs.Server, CLIArgs.CSR, CLIArgs.Plugin)
 	if err != nil {
 		return C.CString(fmt.Sprint("error: couldn't request certificate: ", err))
 	}
@@ -68,10 +69,20 @@ func RunLegoCommand(message *C.char) *C.char {
 	return return_message_ptr
 }
 
-func requestCertificate(email, server, csr, plugin string) (*LegoOutputResponse, error) {
-	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't generate priv key: %s", err)
+func requestCertificate(email, privateKeyPem, server, csr, plugin string) (*LegoOutputResponse, error) {
+	var privateKey crypto.PrivateKey
+	if privateKeyPem != "" {
+		parsedKey, err := certcrypto.ParsePEMPrivateKey([]byte(privateKeyPem))
+		if err != nil {
+			return nil, fmt.Errorf("couldn't parse private key: %s", err)
+		}
+		privateKey = parsedKey
+	} else {
+		generatedKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		if err != nil {
+			return nil, fmt.Errorf("couldn't generate priv key: %s", err)
+		}
+		privateKey = generatedKey
 	}
 	user := LetsEncryptUser{
 		Email: email,
