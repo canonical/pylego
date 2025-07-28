@@ -41,7 +41,7 @@ jobs:
           files=$(gh pr view ${{ github.event.pull_request.number }} --json files --jq '.files[].path' || true)
           echo "Files changed:"
           echo "$files"
-          if echo "$files" | grep -q "^src/"; then
+          if echo "$files" | grep -Eq "^(src/|pyproject\\.toml|uv\\.lock)"; then
             echo "src_changed=true" >> $GITHUB_OUTPUT
           else
             echo "src_changed=false" >> $GITHUB_OUTPUT
