@@ -6,7 +6,7 @@ authors = [
 ]
 description = "A python wrapper package for the lego application written in Golang"
 readme = "README.md"
-requires-python = ">=3.13.3"
+requires-python = ">=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: Apache Software License",
