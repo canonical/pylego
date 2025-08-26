@@ -24,7 +24,7 @@ jobs:
       src_changed: ${{ steps.src-check.outputs.src_changed }}
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 2
       - name: check if src files changed
