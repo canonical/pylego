@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/go-acme/lego/v4/certificate"
+	"github.com/go-acme/lego/v4/challenge/dns01"
 	"github.com/go-acme/lego/v4/challenge/http01"
 	"github.com/go-acme/lego/v4/challenge/tlsalpn01"
 	"github.com/go-acme/lego/v4/lego"
@@ -155,7 +156,10 @@ func configureClientChallenges(client *lego.Client, plugin string) error {
 		if err != nil {
 			return errors.Join(fmt.Errorf("couldn't create %s provider: ", plugin), err)
 		}
-		err = client.Challenge.SetDNS01Provider(dnsProvider)
+		err = client.Challenge.SetDNS01Provider(dnsProvider,
+			dns01.CondOption(os.Getenv("DNS_PROPAGATION_DISABLE_ANS") != "",
+				dns01.DisableAuthoritativeNssPropagationRequirement()),
+			dns01.CondOption(os.Getenv("DNS_PROPAGATION_RNS") != "", dns01.RecursiveNSsPropagationRequirement()))
 		if err != nil {
 			return errors.Join(fmt.Errorf("couldn't set %s DNS provider server: ", plugin), err)
 		}
