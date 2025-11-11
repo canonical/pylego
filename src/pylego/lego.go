@@ -142,15 +142,16 @@ func requestCertificate(email, privateKeyPem, server, csr, plugin string) (*Lego
 
 func configureClientChallenges(client *lego.Client, plugin string) error {
 	switch plugin {
-	case "":
-		err := client.Challenge.SetHTTP01Provider(http01.NewProviderServer(os.Getenv("HTTP01_IFACE"), os.Getenv("HTTP01_PORT")))
-		if err != nil {
+	case "", "http":
+		if err := client.Challenge.SetHTTP01Provider(http01.NewProviderServer(os.Getenv("HTTP01_IFACE"), os.Getenv("HTTP01_PORT"))); err != nil {
 			return errors.Join(errors.New("couldn't set http01 provider server: "), err)
 		}
-		err = client.Challenge.SetTLSALPN01Provider(tlsalpn01.NewProviderServer(os.Getenv("TLSALPN01_IFACE"), os.Getenv("TLSALPN01_PORT")))
-		if err != nil {
+		return nil
+	case "tls":
+		if err := client.Challenge.SetTLSALPN01Provider(tlsalpn01.NewProviderServer(os.Getenv("TLSALPN01_IFACE"), os.Getenv("TLSALPN01_PORT"))); err != nil {
 			return errors.Join(errors.New("couldn't set tlsalpn01 provider server: "), err)
 		}
+		return nil
 	default:
 		dnsProvider, err := dns.NewDNSChallengeProviderByName(plugin)
 		if err != nil {
@@ -163,8 +164,8 @@ func configureClientChallenges(client *lego.Client, plugin string) error {
 		if err != nil {
 			return errors.Join(fmt.Errorf("couldn't set %s DNS provider server: ", plugin), err)
 		}
+		return nil
 	}
-	return nil
 }
 
 type LetsEncryptUser struct {

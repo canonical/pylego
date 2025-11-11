@@ -43,7 +43,7 @@ def run_lego_command(
         email: the email to be used for registration
         server: the server to be used for requesting a certificate that implements the ACME protocol
         csr: the csr to be signed
-        plugin: which DNS provider plugin to use for the request. Find yours at https://go-acme.github.io/lego/dns/.
+        plugin: provider to use. One of: "http" (HTTP-01), "tls" (TLS-ALPN-01), or any LEGO DNS provider from https://go-acme.github.io/lego/dns/.
         env: the environment variables required for the chosen plugin.
         private_key: the private key to be used for the registration on the ACME server (not the private key used to sign the CSR).
             If not provided, a new one will be generated.
