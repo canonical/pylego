@@ -28,12 +28,17 @@ jobs:
 
       - name: Publish package to PyPI
         env:
-          UV_PUBLISH_TOKEN: __token__
-          UV_PUBLISH_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         run: |
-          OUTPUT=$(uv publish) || true
-          if echo "$OUTPUT" | grep -q "File already exists"; then
-            echo "Package version already exists. Skipping further steps."
-            exit 0
-          fi
+          set +e
+          OUTPUT=$(uv publish 2>&1)
+          STATUS=$?
+          set -e
           echo "$OUTPUT"
+          if [ "$STATUS" -ne 0 ]; then
+            if echo "$OUTPUT" | grep -q "File already exists"; then
+              echo "Package version already exists. Skipping further steps."
+              exit 0
+            fi
+            exit "$STATUS"
+          fi
