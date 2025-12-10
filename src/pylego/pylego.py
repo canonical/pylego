@@ -35,7 +35,13 @@ class LEGOError(Exception):
 
 
 def run_lego_command(
-    email: str, server: str, csr: bytes, env: dict[str, str], plugin: str = "", private_key: str = ""
+    email: str,
+    server: str,
+    csr: bytes,
+    env: dict[str, str],
+    plugin: str = "",
+    private_key: str = "",
+    dns_propagation_wait: int | None = None,
 ) -> LEGOResponse:
     """Run an arbitrary command in the Lego application. Read more at https://go-acme.github.io.
 
@@ -47,21 +53,27 @@ def run_lego_command(
         env: the environment variables required for the chosen plugin.
         private_key: the private key to be used for the registration on the ACME server (not the private key used to sign the CSR).
             If not provided, a new one will be generated.
+        dns_propagation_wait: optional wait duration for DNS propagation, in seconds (int).
     """
     library.RunLegoCommand.restype = ctypes.c_char_p
     library.RunLegoCommand.argtypes = [ctypes.c_char_p]
 
+    if dns_propagation_wait is not None and dns_propagation_wait < 0:
+        raise ValueError("dns_propagation_wait cannot be negative")
+
+    payload = {
+        "email": email,
+        "server": server,
+        "csr": csr.decode(),
+        "plugin": plugin,
+        "env": env,
+        "private_key": private_key,
+    }
+    if dns_propagation_wait is not None:
+        payload["dns_propagation_wait"] = dns_propagation_wait
+
     message = bytes(
-        json.dumps(
-            {
-                "email": email,
-                "server": server,
-                "csr": csr.decode(),
-                "plugin": plugin,
-                "env": env,
-                "private_key": private_key,
-            }
-        ),
+        json.dumps(payload),
         "utf-8",
     )
     result: bytes = library.RunLegoCommand(message)
