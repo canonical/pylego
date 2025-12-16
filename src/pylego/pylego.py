@@ -31,7 +31,34 @@ class LEGOResponse:
 
 
 class LEGOError(Exception):
-    """Exceptions that are returned from the LEGO Go library."""
+    """Unified exception for all errors returned by the lego invocation.
+
+    Attributes:
+        type: source of the error. "acme" when coming from the ACME server, otherwise "lego".
+        code: error code/category. For ACME, this is derived from the ACME problem type; otherwise, it's set by lego.
+        status: HTTP status code for ACME errors, 0 otherwise.
+        detail: human-readable description of the error.
+        acme_type: full ACME problem type (URN), present only for ACME errors.
+        info: dictionary with the raw error information returned by the underlying call, minus any unused fields.
+    """
+
+    def __init__(
+        self,
+        detail: str,
+        *,
+        type: str = "lego",
+        code: str = "",
+        status: int = 0,
+        acme_type: str = "",
+        info: dict | None = None,
+    ):
+        super().__init__(detail)
+        self.type = type
+        self.code = code
+        self.status = status
+        self.detail = detail
+        self.acme_type = acme_type
+        self.info = info or {}
 
 
 def run_lego_command(
@@ -77,7 +104,27 @@ def run_lego_command(
         "utf-8",
     )
     result: bytes = library.RunLegoCommand(message)
-    if result.startswith(b"error:"):
-        raise LEGOError(result.decode())
-    result_dict = json.loads(result.decode("utf-8"))
-    return LEGOResponse(**{**result_dict, "metadata": Metadata(**result_dict.get("metadata"))})
+    result_str = result.decode("utf-8")
+
+    try:
+        result_dict = json.loads(result_str)
+    except json.JSONDecodeError as e:
+        raise LEGOError(f"Failed to parse response: {result_str}") from e
+
+    if not result_dict.get("success", False):
+        error_info: dict = result_dict.get("error", {})
+        err_source = error_info.get("type", "lego")
+        detail = error_info.get("detail", "Unknown error occurred")
+
+        info = dict(error_info)
+        raise LEGOError(
+            detail,
+            type="acme" if err_source == "acme" else "lego",
+            code=error_info.get("code", ""),
+            status=error_info.get("status", 0),
+            acme_type=error_info.get("acme_type", "") if err_source == "acme" else "",
+            info=info,
+        )
+
+    data = result_dict.get("data", {})
+    return LEGOResponse(**{**data, "metadata": Metadata(**data.get("metadata", {}))})
