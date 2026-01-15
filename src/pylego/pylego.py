@@ -36,10 +36,10 @@ class LEGOError(Exception):
     Attributes:
         type: source of the error. "acme" when coming from the ACME server, otherwise "lego".
         code: error code/category. For ACME, this is derived from the ACME problem type; otherwise, it's set by lego.
-        status: HTTP status code for ACME errors, 0 otherwise.
+        status: HTTP status code for ACME errors, None otherwise.
         detail: human-readable description of the error.
         acme_type: full ACME problem type (URN), present only for ACME errors.
-        info: dictionary with the raw error information returned by the underlying call, minus any unused fields.
+        info: dictionary with the raw error information returned by the underlying call.
     """
 
     def __init__(
@@ -48,11 +48,13 @@ class LEGOError(Exception):
         *,
         type: str = "lego",
         code: str = "",
-        status: int = 0,
+        status: int | None = None,
         acme_type: str = "",
         info: dict | None = None,
     ):
-        super().__init__(detail)
+        # Include code in exception message for better error display
+        message = f"[{code}] {detail}" if code else detail
+        super().__init__(message)
         self.type = type
         self.code = code
         self.status = status
@@ -121,7 +123,7 @@ def run_lego_command(
             detail,
             type="acme" if err_source == "acme" else "lego",
             code=error_info.get("code", ""),
-            status=error_info.get("status", 0),
+            status=error_info.get("status"),
             acme_type=error_info.get("acme_type", "") if err_source == "acme" else "",
             info=info,
         )

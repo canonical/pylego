@@ -131,7 +131,8 @@ class TestPyLego:
         assert error.code == "invalid_private_key"
         assert error.detail != ""
         assert error.acme_type == ""
-        assert error.status == 0
+        assert error.status is None
+        assert "[invalid_private_key]" in str(error)
 
     def test_given_invalid_csr_when_request_sent_then_error_has_correct_type_and_code(
         self,
@@ -153,7 +154,8 @@ class TestPyLego:
         assert error.code == "invalid_csr"
         assert error.detail != ""
         assert error.acme_type == ""
-        assert error.status == 0
+        assert error.status is None
+        assert "[invalid_csr]" in str(error)
 
     def test_given_invalid_dns_provider_when_request_sent_then_error_has_correct_type_and_code(
         self,
@@ -174,7 +176,8 @@ class TestPyLego:
         assert error.code == "dns_provider_failed"
         assert "nonexistent_provider" in error.detail
         assert error.acme_type == ""
-        assert error.status == 0
+        assert error.status is None
+        assert "[dns_provider_failed]" in str(error)
 
     def test_given_negative_dns_propagation_wait_in_python_when_request_sent_then_value_error_raised(
         self,

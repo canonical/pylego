@@ -11,6 +11,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -51,17 +52,39 @@ type Metadata struct {
 }
 
 type ErrorResponse struct {
-	Type     string `json:"type"`      // "acme" for CA server errors, "lego" for everything else
-	Code     string `json:"code"`      // Error code or category
-	Status   int    `json:"status"`    // HTTP status if applicable (ACME errors)
-	Detail   string `json:"detail"`    // Human-readable message
-	ACMEType string `json:"acme_type"` // Full ACME URN if applicable
+	Type     string `json:"type"`                // "acme" for CA server errors, "lego" for everything else
+	Code     string `json:"code"`                // Error code or category
+	Status   *int   `json:"status,omitempty"`    // HTTP status if applicable (ACME errors)
+	Detail   string `json:"detail"`              // Human-readable message
+	ACMEType string `json:"acme_type,omitempty"` // Full ACME URN if applicable
 }
 
 type LegoResponse struct {
 	Success bool                `json:"success"`
 	Error   *ErrorResponse      `json:"error,omitempty"`
 	Data    *LegoOutputResponse `json:"data,omitempty"`
+}
+
+func isNetworkError(err error) bool {
+	if err == nil {
+		return false
+	}
+	// Check for network operation errors (timeout, temporary, etc.)
+	var netErr net.Error
+	if errors.As(err, &netErr) {
+		return true
+	}
+	// Check for DNS errors
+	var dnsErr *net.DNSError
+	if errors.As(err, &dnsErr) {
+		return true
+	}
+	// Check for connection errors (refused, reset, etc.)
+	var opErr *net.OpError
+	if errors.As(err, &opErr) {
+		return true
+	}
+	return false
 }
 
 func wrapError(err error, context string) *ErrorResponse {
@@ -84,12 +107,22 @@ func wrapError(err error, context string) *ErrorResponse {
 				code = parts[len(parts)-1]
 			}
 		}
+		status := problemDetails.HTTPStatus
 		return &ErrorResponse{
 			Type:     "acme",
 			Code:     code,
-			Status:   problemDetails.HTTPStatus,
+			Status:   &status,
 			Detail:   problemDetails.Detail,
 			ACMEType: problemDetails.Type,
+		}
+	}
+
+	// Check for network errors before generic lego error
+	if isNetworkError(err) {
+		return &ErrorResponse{
+			Type:   "lego",
+			Code:   "network_error",
+			Detail: err.Error(),
 		}
 	}
 
@@ -188,7 +221,7 @@ func requestCertificate(email, privateKeyPem, server, csr, plugin string, propag
 
 	client, err := lego.NewClient(config)
 	if err != nil {
-		return nil, err
+		return nil, wrapWithContext(err, "lego_client_creation_failed")
 	}
 
 	err = configureClientChallenges(client, plugin, propagationWait)
@@ -198,7 +231,7 @@ func requestCertificate(email, privateKeyPem, server, csr, plugin string, propag
 
 	reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
 	if err != nil {
-		return nil, err
+		return nil, wrapWithContext(err, "account_registration_failed")
 	}
 	user.Registration = reg
 
@@ -216,7 +249,7 @@ func requestCertificate(email, privateKeyPem, server, csr, plugin string, propag
 	}
 	certificates, err := client.Certificate.ObtainForCSR(request)
 	if err != nil {
-		return nil, err
+		return nil, wrapWithContext(err, "certificate_obtain_failed")
 	}
 
 	return &LegoOutputResponse{
