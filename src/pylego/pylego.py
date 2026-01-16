@@ -10,6 +10,41 @@ so_file = here / ("lego.so")
 library = ctypes.cdll.LoadLibrary(so_file)
 
 
+# Error code constants - must match lego.go constants
+class ErrorCode:
+    """Error codes returned by pylego."""
+    
+    INVALID_ARGUMENTS = "invalid_arguments"
+    INVALID_ENVIRONMENT = "invalid_environment"
+    CERTIFICATE_REQUEST_FAILED = "certificate_request_failed"
+    INVALID_PRIVATE_KEY = "invalid_private_key"
+    KEY_GENERATION_FAILED = "key_generation_failed"
+    LEGO_CLIENT_CREATION_FAILED = "lego_client_creation_failed"
+    DNS_PROVIDER_FAILED = "dns_provider_failed"
+    ACCOUNT_REGISTRATION_FAILED = "account_registration_failed"
+    INVALID_CSR = "invalid_csr"
+    CERTIFICATE_OBTAIN_FAILED = "certificate_obtain_failed"
+    NETWORK_ERROR = "network_error"
+    MARSHALING_FAILED = "marshaling_failed"
+
+
+@dataclass
+class Identifier:
+    """ACME identifier (domain or IP)."""
+    
+    type: str  # "dns" or "ip"
+    value: str  # Domain name or IP address
+
+
+@dataclass
+class Subproblem:
+    """ACME subproblem details."""
+    
+    type: str  # Error type (e.g., "unauthorized", "dns")
+    detail: str  # Human-readable message
+    identifier: Identifier  # The identifier that caused this subproblem
+
+
 @dataclass
 class Metadata:
     """Extra information returned by the ACME server."""
@@ -36,9 +71,11 @@ class LEGOError(Exception):
     Attributes:
         type: source of the error. "acme" when coming from the ACME server, otherwise "lego".
         code: error code/category. For ACME, this is derived from the ACME problem type; otherwise, it's set by lego.
+            See ErrorCode class for possible values.
         status: HTTP status code for ACME errors, None otherwise.
         detail: human-readable description of the error.
         acme_type: full ACME problem type (URN), present only for ACME errors.
+        subproblems: list of Subproblem objects with detailed error information.
         info: dictionary with the raw error information returned by the underlying call.
     """
 
@@ -50,6 +87,7 @@ class LEGOError(Exception):
         code: str = "",
         status: int | None = None,
         acme_type: str = "",
+        subproblems: list[Subproblem] | None = None,
         info: dict | None = None,
     ):
         # Include code in exception message for better error display
@@ -60,6 +98,7 @@ class LEGOError(Exception):
         self.status = status
         self.detail = detail
         self.acme_type = acme_type
+        self.subproblems = subproblems or []
         self.info = info or {}
 
 
@@ -118,6 +157,21 @@ def run_lego_command(
         err_source = error_info.get("type", "lego")
         detail = error_info.get("detail", "Unknown error occurred")
 
+        # Convert subproblem dicts to Subproblem dataclasses
+        subproblems = []
+        for sub_dict in error_info.get("subproblems", []):
+            identifier_dict = sub_dict.get("identifier", {})
+            subproblems.append(
+                Subproblem(
+                    type=sub_dict.get("type", ""),
+                    detail=sub_dict.get("detail", ""),
+                    identifier=Identifier(
+                        type=identifier_dict.get("type", ""),
+                        value=identifier_dict.get("value", ""),
+                    ),
+                )
+            )
+
         info = dict(error_info)
         raise LEGOError(
             detail,
@@ -125,6 +179,7 @@ def run_lego_command(
             code=error_info.get("code", ""),
             status=error_info.get("status"),
             acme_type=error_info.get("acme_type", "") if err_source == "acme" else "",
+            subproblems=subproblems,
             info=info,
         )
 

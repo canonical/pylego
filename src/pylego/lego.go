@@ -27,6 +27,22 @@ import (
 	"github.com/go-acme/lego/v4/registration"
 )
 
+// Error code constants
+const (
+	ErrInvalidArguments          = "invalid_arguments"
+	ErrInvalidEnvironment        = "invalid_environment"
+	ErrCertificateRequestFailed  = "certificate_request_failed"
+	ErrInvalidPrivateKey         = "invalid_private_key"
+	ErrKeyGenerationFailed       = "key_generation_failed"
+	ErrLegoClientCreationFailed  = "lego_client_creation_failed"
+	ErrDNSProviderFailed         = "dns_provider_failed"
+	ErrAccountRegistrationFailed = "account_registration_failed"
+	ErrInvalidCSR                = "invalid_csr"
+	ErrCertificateObtainFailed   = "certificate_obtain_failed"
+	ErrNetworkError              = "network_error"
+	ErrMarshalingFailed          = "marshaling_failed"
+)
+
 type LegoInputArgs struct {
 	Email              string `json:"email"`
 	PrivateKey         string `json:"private_key,omitempty"`
@@ -51,12 +67,24 @@ type Metadata struct {
 	Domain    string `json:"domain"`
 }
 
+type Subproblem struct {
+	Type       string     `json:"type"`                 // Error type URN
+	Detail     string     `json:"detail"`               // Human-readable message
+	Identifier Identifier `json:"identifier,omitempty"` // The identifier that caused this subproblem
+}
+
+type Identifier struct {
+	Type  string `json:"type"`  // "dns" or "ip"
+	Value string `json:"value"` // Domain name or IP address
+}
+
 type ErrorResponse struct {
-	Type     string `json:"type"`                // "acme" for CA server errors, "lego" for everything else
-	Code     string `json:"code"`                // Error code or category
-	Status   *int   `json:"status,omitempty"`    // HTTP status if applicable (ACME errors)
-	Detail   string `json:"detail"`              // Human-readable message
-	ACMEType string `json:"acme_type,omitempty"` // Full ACME URN if applicable
+	Type        string       `json:"type"`                  // "acme" for CA server errors, "lego" for everything else
+	Code        string       `json:"code"`                  // Error code or category
+	Status      *int         `json:"status,omitempty"`      // HTTP status if applicable (ACME errors)
+	Detail      string       `json:"detail"`                // Human-readable message
+	ACMEType    string       `json:"acme_type,omitempty"`   // Full ACME URN if applicable
+	Subproblems []Subproblem `json:"subproblems,omitempty"` // Detailed subproblems from ACME errors
 }
 
 type LegoResponse struct {
@@ -108,12 +136,34 @@ func wrapError(err error, context string) *ErrorResponse {
 			}
 		}
 		status := problemDetails.HTTPStatus
+
+		// Extract subproblems if present
+		var subproblems []Subproblem
+		for _, sub := range problemDetails.SubProblems {
+			subCode := "unknown"
+			if sub.Type != "" {
+				parts := strings.Split(sub.Type, ":")
+				if len(parts) > 0 {
+					subCode = parts[len(parts)-1]
+				}
+			}
+			subproblems = append(subproblems, Subproblem{
+				Type:   subCode,
+				Detail: sub.Detail,
+				Identifier: Identifier{
+					Type:  sub.Identifier.Type,
+					Value: sub.Identifier.Value,
+				},
+			})
+		}
+
 		return &ErrorResponse{
-			Type:     "acme",
-			Code:     code,
-			Status:   &status,
-			Detail:   problemDetails.Detail,
-			ACMEType: problemDetails.Type,
+			Type:        "acme",
+			Code:        code,
+			Status:      &status,
+			Detail:      problemDetails.Detail,
+			ACMEType:    problemDetails.Type,
+			Subproblems: subproblems,
 		}
 	}
 
@@ -121,7 +171,7 @@ func wrapError(err error, context string) *ErrorResponse {
 	if isNetworkError(err) {
 		return &ErrorResponse{
 			Type:   "lego",
-			Code:   "network_error",
+			Code:   ErrNetworkError,
 			Detail: err.Error(),
 		}
 	}
@@ -140,8 +190,21 @@ func buildErrorResponse(err error, context string) *C.char {
 	}
 	responseJSON, marshalErr := json.Marshal(response)
 	if marshalErr != nil {
-		// Fallback to basic error string if JSON marshaling fails
-		return C.CString(fmt.Sprintf(`{"success":false,"error":{"type":"lego","code":"marshaling_failed","detail":"%s"}}`, marshalErr))
+		// Fallback: create minimal error response with proper JSON marshaling
+		fallbackResponse := LegoResponse{
+			Success: false,
+			Error: &ErrorResponse{
+				Type:   "lego",
+				Code:   ErrMarshalingFailed,
+				Detail: marshalErr.Error(),
+			},
+		}
+		// If this fails too, return a hardcoded string (should never happen)
+		fallbackJSON, _ := json.Marshal(fallbackResponse)
+		if len(fallbackJSON) == 0 {
+			return C.CString(`{"success":false,"error":{"type":"lego","code":"marshaling_failed","detail":"critical error"}}`)
+		}
+		return C.CString(string(fallbackJSON))
 	}
 	return C.CString(string(responseJSON))
 }
@@ -153,8 +216,20 @@ func buildSuccessResponse(data *LegoOutputResponse) *C.char {
 	}
 	responseJSON, marshalErr := json.Marshal(response)
 	if marshalErr != nil {
-		// Fallback to error response if JSON marshaling fails
-		return C.CString(fmt.Sprintf(`{"success":false,"error":{"type":"lego","code":"marshaling_failed","detail":"%s"}}`, marshalErr))
+		// Fallback: create error response with proper JSON marshaling
+		fallbackResponse := LegoResponse{
+			Success: false,
+			Error: &ErrorResponse{
+				Type:   "lego",
+				Code:   ErrMarshalingFailed,
+				Detail: marshalErr.Error(),
+			},
+		}
+		fallbackJSON, _ := json.Marshal(fallbackResponse)
+		if len(fallbackJSON) == 0 {
+			return C.CString(`{"success":false,"error":{"type":"lego","code":"marshaling_failed","detail":"critical error"}}`)
+		}
+		return C.CString(string(fallbackJSON))
 	}
 	return C.CString(string(responseJSON))
 }
@@ -180,17 +255,17 @@ func wrapWithContext(err error, context string) error {
 func RunLegoCommand(message *C.char) *C.char {
 	CLIArgs, err := extractArguments(C.GoString(message))
 	if err != nil {
-		return buildErrorResponse(err, "invalid_arguments")
+		return buildErrorResponse(err, ErrInvalidArguments)
 	}
 	for k, v := range CLIArgs.Env {
 		if err := os.Setenv(k, v); err != nil {
-			return buildErrorResponse(err, "invalid_environment")
+			return buildErrorResponse(err, ErrInvalidEnvironment)
 		}
 
 	}
 	certificate, err := requestCertificate(CLIArgs.Email, CLIArgs.PrivateKey, CLIArgs.Server, CLIArgs.CSR, CLIArgs.Plugin, CLIArgs.DNSPropagationWait)
 	if err != nil {
-		return buildErrorResponse(err, "certificate_request_failed")
+		return buildErrorResponse(err, ErrCertificateRequestFailed)
 	}
 	return buildSuccessResponse(certificate)
 }
@@ -200,13 +275,13 @@ func requestCertificate(email, privateKeyPem, server, csr, plugin string, propag
 	if privateKeyPem != "" {
 		parsedKey, err := certcrypto.ParsePEMPrivateKey([]byte(privateKeyPem))
 		if err != nil {
-			return nil, wrapWithContext(err, "invalid_private_key")
+			return nil, wrapWithContext(err, ErrInvalidPrivateKey)
 		}
 		privateKey = parsedKey
 	} else {
 		generatedKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 		if err != nil {
-			return nil, err // General error - key generation failure
+			return nil, wrapWithContext(err, ErrKeyGenerationFailed)
 		}
 		privateKey = generatedKey
 	}
@@ -221,27 +296,27 @@ func requestCertificate(email, privateKeyPem, server, csr, plugin string, propag
 
 	client, err := lego.NewClient(config)
 	if err != nil {
-		return nil, wrapWithContext(err, "lego_client_creation_failed")
+		return nil, wrapWithContext(err, ErrLegoClientCreationFailed)
 	}
 
 	err = configureClientChallenges(client, plugin, propagationWait)
 	if err != nil {
-		return nil, wrapWithContext(err, "dns_provider_failed")
+		return nil, wrapWithContext(err, ErrDNSProviderFailed)
 	}
 
 	reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
 	if err != nil {
-		return nil, wrapWithContext(err, "account_registration_failed")
+		return nil, wrapWithContext(err, ErrAccountRegistrationFailed)
 	}
 	user.Registration = reg
 
 	block, _ := pem.Decode([]byte(csr))
 	if block == nil || block.Type != "CERTIFICATE REQUEST" {
-		return nil, wrapWithContext(errors.New("failed to decode PEM block"), "invalid_csr")
+		return nil, wrapWithContext(errors.New("failed to decode PEM block"), ErrInvalidCSR)
 	}
 	csrObject, err := x509.ParseCertificateRequest(block.Bytes)
 	if err != nil {
-		return nil, wrapWithContext(err, "invalid_csr")
+		return nil, wrapWithContext(err, ErrInvalidCSR)
 	}
 	request := certificate.ObtainForCSRRequest{
 		CSR:    csrObject,
@@ -249,7 +324,7 @@ func requestCertificate(email, privateKeyPem, server, csr, plugin string, propag
 	}
 	certificates, err := client.Certificate.ObtainForCSR(request)
 	if err != nil {
-		return nil, wrapWithContext(err, "certificate_obtain_failed")
+		return nil, wrapWithContext(err, ErrCertificateObtainFailed)
 	}
 
 	return &LegoOutputResponse{
@@ -283,9 +358,7 @@ func configureClientChallenges(client *lego.Client, plugin string, propagationWa
 			return errors.Join(fmt.Errorf("couldn't create %s provider: ", plugin), err)
 		}
 		var wait time.Duration
-		if propagationWait < 0 {
-			return fmt.Errorf("DNS_PROPAGATION_WAIT cannot be negative: %d", propagationWait)
-		}
+		// Note: validation for negative values is done in Python layer
 		if propagationWait > 0 {
 			wait = time.Duration(propagationWait) * time.Second
 		}
