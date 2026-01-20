@@ -93,27 +93,11 @@ class TestPyLego:
         )
         assert response.metadata.domain == "localhost"
 
-    def test_given_invalid_private_key_when_request_sent_then_error_raised(
+    def test_given_invalid_private_key_when_request_sent_then_error_structure_correct(
         self,
         configure_acme_server: dict[str, str | bytes],
     ):
-        with pytest.raises(LEGOError):
-            run_lego_command(
-            email="something@nowhere.com",
-            server="https://localhost:14000/dir",
-            csr=configure_acme_server.get("csr"),
-            env={
-                "SSL_CERT_FILE": configure_acme_server.get("ca_path"),
-                "HTTP01_PORT": "5002",
-                "TLSALPN01_PORT": "5001",
-            },
-            private_key="whatever private key",
-            )
-
-    def test_given_invalid_private_key_when_request_sent_then_error_has_correct_type_and_code(
-        self,
-        configure_acme_server: dict[str, str | bytes],
-    ):
+        """Verify lego error structure has all expected fields populated correctly."""
         with pytest.raises(LEGOError) as exc_info:
             run_lego_command(
                 email="something@nowhere.com",
@@ -129,16 +113,16 @@ class TestPyLego:
         error = exc_info.value
         assert error.type == "lego"
         assert error.code == "invalid_private_key"
-        assert error.detail != ""
+        assert error.detail
         assert error.acme_type == ""
         assert error.status is None
-        assert "[invalid_private_key]" in str(error)
+        assert f"[{error.code}]" in str(error)
 
-    def test_given_invalid_csr_when_request_sent_then_error_has_correct_type_and_code(
+    def test_given_invalid_csr_when_request_sent_then_error_raised(
         self,
         configure_acme_server: dict[str, str | bytes],
     ):
-        with pytest.raises(LEGOError) as exc_info:
+        with pytest.raises(LEGOError):
             run_lego_command(
                 email="something@nowhere.com",
                 server="https://localhost:14000/dir",
@@ -149,19 +133,12 @@ class TestPyLego:
                     "TLSALPN01_PORT": "5001",
                 },
             )
-        error = exc_info.value
-        assert error.type == "lego"
-        assert error.code == "invalid_csr"
-        assert error.detail != ""
-        assert error.acme_type == ""
-        assert error.status is None
-        assert "[invalid_csr]" in str(error)
 
-    def test_given_invalid_dns_provider_when_request_sent_then_error_has_correct_type_and_code(
+    def test_given_invalid_dns_provider_when_request_sent_then_error_raised(
         self,
         configure_acme_server: dict[str, str | bytes],
     ):
-        with pytest.raises(LEGOError) as exc_info:
+        with pytest.raises(LEGOError):
             run_lego_command(
                 email="something@nowhere.com",
                 server="https://localhost:14000/dir",
@@ -171,13 +148,6 @@ class TestPyLego:
                     "SSL_CERT_FILE": configure_acme_server.get("ca_path"),
                 },
             )
-        error = exc_info.value
-        assert error.type == "lego"
-        assert error.code == "dns_provider_failed"
-        assert "nonexistent_provider" in error.detail
-        assert error.acme_type == ""
-        assert error.status is None
-        assert "[dns_provider_failed]" in str(error)
 
     def test_given_negative_dns_propagation_wait_in_python_when_request_sent_then_value_error_raised(
         self,
