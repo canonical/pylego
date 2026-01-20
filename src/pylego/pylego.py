@@ -10,24 +10,6 @@ so_file = here / ("lego.so")
 library = ctypes.cdll.LoadLibrary(so_file)
 
 
-# Error code constants - must match lego.go constants
-class ErrorCode:
-    """Error codes returned by pylego."""
-    
-    INVALID_ARGUMENTS = "invalid_arguments"
-    INVALID_ENVIRONMENT = "invalid_environment"
-    CERTIFICATE_REQUEST_FAILED = "certificate_request_failed"
-    INVALID_PRIVATE_KEY = "invalid_private_key"
-    KEY_GENERATION_FAILED = "key_generation_failed"
-    LEGO_CLIENT_CREATION_FAILED = "lego_client_creation_failed"
-    DNS_PROVIDER_FAILED = "dns_provider_failed"
-    ACCOUNT_REGISTRATION_FAILED = "account_registration_failed"
-    INVALID_CSR = "invalid_csr"
-    CERTIFICATE_OBTAIN_FAILED = "certificate_obtain_failed"
-    NETWORK_ERROR = "network_error"
-    MARSHALING_FAILED = "marshaling_failed"
-
-
 @dataclass
 class Identifier:
     """ACME identifier (domain or IP)."""
@@ -71,7 +53,6 @@ class LEGOError(Exception):
     Attributes:
         type: source of the error. "acme" when coming from the ACME server, otherwise "lego".
         code: error code/category. For ACME, this is derived from the ACME problem type; otherwise, it's set by lego.
-            See ErrorCode class for possible values.
         status: HTTP status code for ACME errors, None otherwise.
         detail: human-readable description of the error.
         acme_type: full ACME problem type (URN), present only for ACME errors.
