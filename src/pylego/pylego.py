@@ -157,7 +157,6 @@ def run_lego_command(
         err_source = error_info.get("type", "lego")
         detail = error_info.get("detail", "Unknown error occurred")
 
-        # Convert subproblem dicts to Subproblem dataclasses
         subproblems = []
         for sub_dict in error_info.get("subproblems", []):
             identifier_dict = sub_dict.get("identifier", {})

@@ -97,17 +97,14 @@ func isNetworkError(err error) bool {
 	if err == nil {
 		return false
 	}
-	// Check for network operation errors (timeout, temporary, etc.)
 	var netErr net.Error
 	if errors.As(err, &netErr) {
 		return true
 	}
-	// Check for DNS errors
 	var dnsErr *net.DNSError
 	if errors.As(err, &dnsErr) {
 		return true
 	}
-	// Check for connection errors (refused, reset, etc.)
 	var opErr *net.OpError
 	if errors.As(err, &opErr) {
 		return true
@@ -137,7 +134,6 @@ func wrapError(err error, context string) *ErrorResponse {
 		}
 		status := problemDetails.HTTPStatus
 
-		// Extract subproblems if present
 		var subproblems []Subproblem
 		for _, sub := range problemDetails.SubProblems {
 			subCode := "unknown"
@@ -167,7 +163,6 @@ func wrapError(err error, context string) *ErrorResponse {
 		}
 	}
 
-	// Check for network errors before generic lego error
 	if isNetworkError(err) {
 		return &ErrorResponse{
 			Type:   "lego",
@@ -190,7 +185,6 @@ func buildErrorResponse(err error, context string) *C.char {
 	}
 	responseJSON, marshalErr := json.Marshal(response)
 	if marshalErr != nil {
-		// Fallback: create minimal error response with proper JSON marshaling
 		fallbackResponse := LegoResponse{
 			Success: false,
 			Error: &ErrorResponse{
@@ -199,11 +193,7 @@ func buildErrorResponse(err error, context string) *C.char {
 				Detail: marshalErr.Error(),
 			},
 		}
-		// If this fails too, return a hardcoded string (should never happen)
 		fallbackJSON, _ := json.Marshal(fallbackResponse)
-		if len(fallbackJSON) == 0 {
-			return C.CString(`{"success":false,"error":{"type":"lego","code":"marshaling_failed","detail":"critical error"}}`)
-		}
 		return C.CString(string(fallbackJSON))
 	}
 	return C.CString(string(responseJSON))
@@ -216,7 +206,6 @@ func buildSuccessResponse(data *LegoOutputResponse) *C.char {
 	}
 	responseJSON, marshalErr := json.Marshal(response)
 	if marshalErr != nil {
-		// Fallback: create error response with proper JSON marshaling
 		fallbackResponse := LegoResponse{
 			Success: false,
 			Error: &ErrorResponse{
@@ -226,9 +215,6 @@ func buildSuccessResponse(data *LegoOutputResponse) *C.char {
 			},
 		}
 		fallbackJSON, _ := json.Marshal(fallbackResponse)
-		if len(fallbackJSON) == 0 {
-			return C.CString(`{"success":false,"error":{"type":"lego","code":"marshaling_failed","detail":"critical error"}}`)
-		}
 		return C.CString(string(fallbackJSON))
 	}
 	return C.CString(string(responseJSON))
@@ -358,7 +344,6 @@ func configureClientChallenges(client *lego.Client, plugin string, propagationWa
 			return errors.Join(fmt.Errorf("couldn't create %s provider: ", plugin), err)
 		}
 		var wait time.Duration
-		// Note: validation for negative values is done in Python layer
 		if propagationWait > 0 {
 			wait = time.Duration(propagationWait) * time.Second
 		}
