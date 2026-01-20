@@ -13,7 +13,7 @@ library = ctypes.cdll.LoadLibrary(so_file)
 @dataclass
 class Identifier:
     """ACME identifier (domain or IP)."""
-    
+
     type: str  # "dns" or "ip"
     value: str  # Domain name or IP address
 
@@ -21,7 +21,7 @@ class Identifier:
 @dataclass
 class Subproblem:
     """ACME subproblem details."""
-    
+
     type: str  # Error type (e.g., "unauthorized", "dns")
     detail: str  # Human-readable message
     identifier: Identifier  # The identifier that caused this subproblem
