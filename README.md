@@ -48,6 +48,161 @@ On top of the environment variables that LEGO supports, we have some extra ones 
 | `TLSALPN01_IFACE` | Interface for the TLS-ALPN-01 challenge (when `plugin=tls`). Any interface by default.                                        |
 | `TLSALPN01_PORT`  | Port for the TLS-ALPN-01 challenge (when `plugin=tls`). 443 by default.                                                       |
 
+## Error Handling
+
+pylego provides structured error handling through the `LEGOError` exception class. All errors raised by `run_lego_command()` include detailed information to help diagnose issues.
+
+### LEGOError Attributes
+
+When an error occurs, the `LEGOError` exception contains the following attributes:
+
+```python
+from pylego import run_lego_command, LEGOError, ErrorCode
+
+try:
+    result = run_lego_command(...)
+except LEGOError as e:
+    print(f"Error type: {e.type}")        # "acme" or "lego"
+    print(f"Error code: {e.code}")        # Specific error code (see below)
+    print(f"Detail: {e.detail}")          # Human-readable error message
+    print(f"Status: {e.status}")          # HTTP status (ACME errors only)
+    print(f"ACME type: {e.acme_type}")    # Full ACME URN (ACME errors only)
+    print(f"Subproblems: {e.subproblems}") # List of subproblems (ACME errors)
+    print(f"Raw info: {e.info}")          # Complete error dictionary
+```
+
+### Error Types
+
+- **`acme`**: Errors returned by the ACME server (e.g., validation failures, rate limits)
+- **`lego`**: Errors from the lego library or input validation (e.g., invalid CSR, DNS provider issues)
+
+### Error Codes
+
+pylego uses structured error codes to identify specific failure scenarios. Import `ErrorCode` for constant values:
+
+```python
+from pylego import ErrorCode
+
+# Lego library error codes
+ErrorCode.INVALID_ARGUMENTS              # Invalid input arguments
+ErrorCode.INVALID_ENVIRONMENT            # Failed to set environment variables
+ErrorCode.INVALID_PRIVATE_KEY            # Private key parsing failed
+ErrorCode.KEY_GENERATION_FAILED          # Failed to generate new private key
+ErrorCode.INVALID_CSR                    # CSR parsing or validation failed
+ErrorCode.DNS_PROVIDER_FAILED            # DNS provider configuration failed
+ErrorCode.LEGO_CLIENT_CREATION_FAILED    # Failed to create lego client
+ErrorCode.ACCOUNT_REGISTRATION_FAILED    # ACME account registration failed
+ErrorCode.CERTIFICATE_OBTAIN_FAILED      # Certificate issuance failed
+ErrorCode.CERTIFICATE_REQUEST_FAILED     # General certificate request failure
+ErrorCode.NETWORK_ERROR                  # Network connectivity issues
+ErrorCode.MARSHALING_FAILED              # Internal JSON serialization error
+```
+
+### ACME Error Codes
+
+For ACME errors (`e.type == "acme"`), the error code is extracted from the ACME problem type URN. Common ACME error codes include:
+
+- `unauthorized` - Authorization failed for domain
+- `dns` - DNS validation issues
+- `rateLimited` - Rate limit exceeded
+- `badCSR` - Invalid certificate signing request
+- `caa` - CAA record prevents issuance
+- `connection` - Server couldn't connect to validate
+
+ACME errors also include the full URN in `e.acme_type` (e.g., `urn:ietf:params:acme:error:unauthorized`).
+
+### Subproblems
+
+ACME errors may include subproblems that provide detailed information about specific failures:
+
+```python
+from pylego import run_lego_command, LEGOError
+
+try:
+    result = run_lego_command(...)
+except LEGOError as e:
+    if e.type == "acme" and e.subproblems:
+        for subproblem in e.subproblems:
+            print(f"  Type: {subproblem.type}")
+            print(f"  Detail: {subproblem.detail}")
+            print(f"  Identifier: {subproblem.identifier.type}:{subproblem.identifier.value}")
+```
+
+### Error Handling Examples
+
+**Example 1: Handle specific error codes**
+
+```python
+from pylego import run_lego_command, LEGOError, ErrorCode
+
+try:
+    result = run_lego_command(
+        email="admin@example.com",
+        server="https://acme-v02.api.letsencrypt.org/directory",
+        csr=csr_bytes,
+        env=env_vars,
+    )
+except LEGOError as e:
+    if e.code == ErrorCode.INVALID_CSR:
+        print("CSR validation failed. Please check your certificate request.")
+    elif e.code == ErrorCode.DNS_PROVIDER_FAILED:
+        print(f"DNS provider error: {e.detail}")
+    elif e.code == ErrorCode.NETWORK_ERROR:
+        print("Network connectivity issue. Please check your connection.")
+    else:
+        print(f"Certificate request failed: {e}")
+```
+
+**Example 2: Differentiate between ACME and lego errors**
+
+```python
+from pylego import run_lego_command, LEGOError
+
+try:
+    result = run_lego_command(...)
+except LEGOError as e:
+    if e.type == "acme":
+        # ACME server rejected the request
+        print(f"ACME server error [{e.code}]: {e.detail}")
+        if e.status:
+            print(f"HTTP Status: {e.status}")
+        if e.subproblems:
+            print("Validation failures:")
+            for sub in e.subproblems:
+                print(f"  - {sub.identifier.value}: {sub.detail}")
+    else:
+        # Configuration or library error
+        print(f"Configuration error [{e.code}]: {e.detail}")
+```
+
+**Example 3: Logging complete error information**
+
+```python
+import json
+from pylego import run_lego_command, LEGOError
+
+try:
+    result = run_lego_command(...)
+except LEGOError as e:
+    # Log complete error details for debugging
+    error_log = {
+        "type": e.type,
+        "code": e.code,
+        "detail": e.detail,
+        "status": e.status,
+        "acme_type": e.acme_type,
+        "subproblems": [
+            {
+                "type": sub.type,
+                "detail": sub.detail,
+                "identifier": {"type": sub.identifier.type, "value": sub.identifier.value},
+            }
+            for sub in e.subproblems
+        ],
+    }
+    print(json.dumps(error_log, indent=2))
+```
+
 ## How does it work?
 
 Golang supports building a shared c library from its CLI build tool. We import and use the LEGO application from GoLang, and provide a stub with C bindings so that the shared C binary we produce exposes a C API for other programs to import and utilize. pylego then uses the [ctypes](https://docs.python.org/3/library/ctypes.html) standard library in python to load this binary, and make calls to its methods.
