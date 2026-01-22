@@ -166,6 +166,22 @@ class TestPyLego:
                 dns_propagation_wait=-1,
             )
         assert "cannot be negative" in str(exc_info.value)
+    def test_given_custom_dns_nameservers_when_request_sent_then_certificate_issued(
+        self,
+        configure_acme_server: dict[str, str | bytes],
+    ):
+        response = run_lego_command(
+            email="something@nowhere.com",
+            server="https://localhost:14000/dir",
+            csr=configure_acme_server.get("csr"),
+            env={
+                "SSL_CERT_FILE": configure_acme_server.get("ca_path"),
+                "HTTP01_PORT": "5002",
+                "TLSALPN01_PORT": "5001",
+            },
+            dns_nameservers=["8.8.8.8", "8.8.4.4:53"],
+        )
+        assert response.metadata.domain == "localhost"
 
 
 def poll_server(url: str, freq: int = 1, timeout: int = 60):
