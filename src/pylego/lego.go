@@ -50,7 +50,8 @@ type LegoInputArgs struct {
 	CSR                string `json:"csr"`
 	Plugin             string `json:"plugin"`
 	Env                map[string]string
-	DNSPropagationWait int `json:"dns_propagation_wait,omitempty"`
+	DNSPropagationWait int      `json:"dns_propagation_wait,omitempty"`
+	DNSNameservers     []string `json:"dns_nameservers,omitempty"`
 }
 
 type LegoOutputResponse struct {
@@ -259,14 +260,14 @@ func RunLegoCommand(message *C.char) *C.char {
 		}
 
 	}
-	certificate, err := requestCertificate(CLIArgs.Email, CLIArgs.PrivateKey, CLIArgs.Server, CLIArgs.CSR, CLIArgs.Plugin, CLIArgs.DNSPropagationWait)
+	certificate, err := requestCertificate(CLIArgs.Email, CLIArgs.PrivateKey, CLIArgs.Server, CLIArgs.CSR, CLIArgs.Plugin, CLIArgs.DNSPropagationWait, CLIArgs.DNSNameservers)
 	if err != nil {
 		return buildErrorResponse(err, ErrCertificateRequestFailed)
 	}
 	return buildSuccessResponse(certificate)
 }
 
-func requestCertificate(email, privateKeyPem, server, csr, plugin string, propagationWait int) (*LegoOutputResponse, error) {
+func requestCertificate(email, privateKeyPem, server, csr, plugin string, propagationWait int, nameservers []string) (*LegoOutputResponse, error) {
 	var privateKey crypto.PrivateKey
 	if privateKeyPem != "" {
 		parsedKey, err := certcrypto.ParsePEMPrivateKey([]byte(privateKeyPem))
@@ -295,7 +296,7 @@ func requestCertificate(email, privateKeyPem, server, csr, plugin string, propag
 		return nil, wrapWithContext(err, ErrLegoClientCreationFailed)
 	}
 
-	err = configureClientChallenges(client, plugin, propagationWait)
+	err = configureClientChallenges(client, plugin, propagationWait, nameservers)
 	if err != nil {
 		return nil, wrapWithContext(err, ErrDNSProviderFailed)
 	}
@@ -336,7 +337,7 @@ func requestCertificate(email, privateKeyPem, server, csr, plugin string, propag
 	}, nil
 }
 
-func configureClientChallenges(client *lego.Client, plugin string, propagationWait int) error {
+func configureClientChallenges(client *lego.Client, plugin string, propagationWait int, nameservers []string) error {
 	switch plugin {
 	case "", "http":
 		if err := client.Challenge.SetHTTP01Provider(http01.NewProviderServer(os.Getenv("HTTP01_IFACE"), os.Getenv("HTTP01_PORT"))); err != nil {
@@ -363,7 +364,9 @@ func configureClientChallenges(client *lego.Client, plugin string, propagationWa
 				dns01.DisableAuthoritativeNssPropagationRequirement()),
 			dns01.CondOption(wait > 0,
 				dns01.PropagationWait(wait, true)),
-			dns01.CondOption(os.Getenv("DNS_PROPAGATION_RNS") != "", dns01.RecursiveNSsPropagationRequirement()))
+			dns01.CondOption(os.Getenv("DNS_PROPAGATION_RNS") != "", dns01.RecursiveNSsPropagationRequirement()),
+			dns01.CondOption(len(nameservers) > 0,
+				dns01.AddRecursiveNameservers(nameservers)))
 		if err != nil {
 			return errors.Join(fmt.Errorf("couldn't set %s DNS provider server: ", plugin), err)
 		}

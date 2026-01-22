@@ -91,6 +91,7 @@ def run_lego_command(
     plugin: str = "",
     private_key: str = "",
     dns_propagation_wait: int | None = None,
+    dns_nameservers: list[str] | None = None,
 ) -> LEGOResponse:
     """Run an arbitrary command in the Lego application. Read more at https://go-acme.github.io.
 
@@ -103,6 +104,8 @@ def run_lego_command(
         private_key: the private key to be used for the registration on the ACME server (not the private key used to sign the CSR).
             If not provided, a new one will be generated.
         dns_propagation_wait: optional wait duration for DNS propagation, in seconds (int).
+        dns_nameservers: optional list of DNS nameserver addresses to use for DNS-01 challenge verification.
+            Can include ports (e.g., ["8.8.8.8:53", "8.8.4.4:53"]) or just IP addresses (port 53 assumed).
     """
     library.RunLegoCommand.restype = ctypes.c_char_p
     library.RunLegoCommand.argtypes = [ctypes.c_char_p]
@@ -120,6 +123,8 @@ def run_lego_command(
     }
     if dns_propagation_wait is not None:
         payload["dns_propagation_wait"] = dns_propagation_wait
+    if dns_nameservers is not None:
+        payload["dns_nameservers"] = dns_nameservers
 
     message = bytes(
         json.dumps(payload),
