@@ -97,19 +97,22 @@ func isNetworkError(err error) bool {
 	if err == nil {
 		return false
 	}
-	var netErr net.Error
-	if errors.As(err, &netErr) {
+	var (
+		netErr net.Error
+		dnsErr *net.DNSError
+		opErr  *net.OpError
+	)
+
+	switch {
+	case errors.As(err, &netErr):
 		return true
-	}
-	var dnsErr *net.DNSError
-	if errors.As(err, &dnsErr) {
+	case errors.As(err, &dnsErr):
 		return true
-	}
-	var opErr *net.OpError
-	if errors.As(err, &opErr) {
+	case errors.As(err, &opErr):
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 func extractSubproblems(problemDetails *acme.ProblemDetails) []Subproblem {
