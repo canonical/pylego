@@ -112,6 +112,28 @@ func isNetworkError(err error) bool {
 	return false
 }
 
+func extractSubproblems(problemDetails *acme.ProblemDetails) []Subproblem {
+	var subproblems []Subproblem
+	for _, sub := range problemDetails.SubProblems {
+		subCode := "unknown"
+		if sub.Type != "" {
+			parts := strings.Split(sub.Type, ":")
+			if len(parts) > 0 {
+				subCode = parts[len(parts)-1]
+			}
+		}
+		subproblems = append(subproblems, Subproblem{
+			Type:   subCode,
+			Detail: sub.Detail,
+			Identifier: Identifier{
+				Type:  sub.Identifier.Type,
+				Value: sub.Identifier.Value,
+			},
+		})
+	}
+	return subproblems
+}
+
 func wrapError(err error, context string) *ErrorResponse {
 	if err == nil {
 		return nil
@@ -134,32 +156,13 @@ func wrapError(err error, context string) *ErrorResponse {
 		}
 		status := problemDetails.HTTPStatus
 
-		var subproblems []Subproblem
-		for _, sub := range problemDetails.SubProblems {
-			subCode := "unknown"
-			if sub.Type != "" {
-				parts := strings.Split(sub.Type, ":")
-				if len(parts) > 0 {
-					subCode = parts[len(parts)-1]
-				}
-			}
-			subproblems = append(subproblems, Subproblem{
-				Type:   subCode,
-				Detail: sub.Detail,
-				Identifier: Identifier{
-					Type:  sub.Identifier.Type,
-					Value: sub.Identifier.Value,
-				},
-			})
-		}
-
 		return &ErrorResponse{
 			Type:        "acme",
 			Code:        code,
 			Status:      &status,
 			Detail:      problemDetails.Detail,
 			ACMEType:    problemDetails.Type,
-			Subproblems: subproblems,
+			Subproblems: extractSubproblems(problemDetails),
 		}
 	}
 
@@ -184,19 +187,21 @@ func buildErrorResponse(err error, context string) *C.char {
 		Error:   wrapError(err, context),
 	}
 	responseJSON, marshalErr := json.Marshal(response)
-	if marshalErr != nil {
-		fallbackResponse := LegoResponse{
-			Success: false,
-			Error: &ErrorResponse{
-				Type:   "lego",
-				Code:   ErrMarshalingFailed,
-				Detail: marshalErr.Error(),
-			},
-		}
-		fallbackJSON, _ := json.Marshal(fallbackResponse)
-		return C.CString(string(fallbackJSON))
+	if marshalErr == nil {
+		return C.CString(string(responseJSON))
 	}
-	return C.CString(string(responseJSON))
+
+	fallbackResponse := LegoResponse{
+		Success: false,
+		Error: &ErrorResponse{
+			Type:   "lego",
+			Code:   ErrMarshalingFailed,
+			Detail: marshalErr.Error(),
+		},
+	}
+	fallbackJSON, _ := json.Marshal(fallbackResponse)
+
+	return C.CString(string(fallbackJSON))
 }
 
 func buildSuccessResponse(data *LegoOutputResponse) *C.char {
@@ -205,19 +210,21 @@ func buildSuccessResponse(data *LegoOutputResponse) *C.char {
 		Data:    data,
 	}
 	responseJSON, marshalErr := json.Marshal(response)
-	if marshalErr != nil {
-		fallbackResponse := LegoResponse{
-			Success: false,
-			Error: &ErrorResponse{
-				Type:   "lego",
-				Code:   ErrMarshalingFailed,
-				Detail: marshalErr.Error(),
-			},
-		}
-		fallbackJSON, _ := json.Marshal(fallbackResponse)
-		return C.CString(string(fallbackJSON))
+	if marshalErr == nil {
+		return C.CString(string(responseJSON))
 	}
-	return C.CString(string(responseJSON))
+
+	fallbackResponse := LegoResponse{
+		Success: false,
+		Error: &ErrorResponse{
+			Type:   "lego",
+			Code:   ErrMarshalingFailed,
+			Detail: marshalErr.Error(),
+		},
+	}
+	fallbackJSON, _ := json.Marshal(fallbackResponse)
+
+	return C.CString(string(fallbackJSON))
 }
 
 type contextError struct {
