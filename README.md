@@ -48,6 +48,29 @@ On top of the environment variables that LEGO supports, we have some extra ones 
 | `TLSALPN01_IFACE` | Interface for the TLS-ALPN-01 challenge (when `plugin=tls`). Any interface by default.                                        |
 | `TLSALPN01_PORT`  | Port for the TLS-ALPN-01 challenge (when `plugin=tls`). 443 by default.                                                       |
 
+## Error Handling
+
+All errors raised by `run_lego_command()` are `LEGOError` exceptions with structured information:
+
+```python
+from pylego import run_lego_command, LEGOError
+
+try:
+    result = run_lego_command(...)
+except LEGOError as e:
+    print(f"Error: {e}")              # Includes error code in message
+    print(f"Type: {e.type}")          # "acme" (server) or "lego" (client)
+    print(f"Code: {e.code}")          # e.g., "invalid_csr", "dns_provider_failed"
+    print(f"Detail: {e.detail}")      # Human-readable message
+
+    # ACME-specific fields
+    if e.type == "acme":
+        print(f"Status: {e.status}")      # HTTP status code
+        print(f"Subproblems: {e.subproblems}")  # Validation details per domain
+```
+
+Common error codes: `invalid_csr`, `invalid_private_key`, `dns_provider_failed`, `network_error`, `certificate_obtain_failed`. ACME errors include codes like `unauthorized`, `rateLimited`, `dns`.
+
 ## How does it work?
 
 Golang supports building a shared c library from its CLI build tool. We import and use the LEGO application from GoLang, and provide a stub with C bindings so that the shared C binary we produce exposes a C API for other programs to import and utilize. pylego then uses the [ctypes](https://docs.python.org/3/library/ctypes.html) standard library in python to load this binary, and make calls to its methods.

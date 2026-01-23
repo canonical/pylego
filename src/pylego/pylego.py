@@ -11,6 +11,23 @@ library = ctypes.cdll.LoadLibrary(so_file)
 
 
 @dataclass
+class Identifier:
+    """ACME identifier (domain or IP)."""
+
+    type: str  # "dns" or "ip"
+    value: str  # Domain name or IP address
+
+
+@dataclass
+class Subproblem:
+    """ACME subproblem details."""
+
+    type: str  # Error type (e.g., "unauthorized", "dns")
+    detail: str  # Human-readable message
+    identifier: Identifier  # The identifier that caused this subproblem
+
+
+@dataclass
 class Metadata:
     """Extra information returned by the ACME server."""
 
@@ -31,7 +48,39 @@ class LEGOResponse:
 
 
 class LEGOError(Exception):
-    """Exceptions that are returned from the LEGO Go library."""
+    """Unified exception for all errors returned by the lego invocation.
+
+    Attributes:
+        type: source of the error. "acme" when coming from the ACME server, otherwise "lego".
+        code: error code/category. For ACME, this is derived from the ACME problem type; otherwise, it's set by lego.
+        status: HTTP status code for ACME errors, None otherwise.
+        detail: human-readable description of the error.
+        acme_type: full ACME problem type (URN), present only for ACME errors.
+        subproblems: list of Subproblem objects with detailed error information.
+        info: dictionary with the raw error information returned by the underlying call.
+    """
+
+    def __init__(
+        self,
+        detail: str,
+        *,
+        type: str = "lego",
+        code: str = "",
+        status: int | None = None,
+        acme_type: str = "",
+        subproblems: list[Subproblem] | None = None,
+        info: dict | None = None,
+    ):
+        # Include code in exception message for better error display
+        message = f"[{code}] {detail}" if code else detail
+        super().__init__(message)
+        self.type = type
+        self.code = code
+        self.status = status
+        self.detail = detail
+        self.acme_type = acme_type
+        self.subproblems = subproblems or []
+        self.info = info or {}
 
 
 def run_lego_command(
@@ -77,7 +126,42 @@ def run_lego_command(
         "utf-8",
     )
     result: bytes = library.RunLegoCommand(message)
-    if result.startswith(b"error:"):
-        raise LEGOError(result.decode())
-    result_dict = json.loads(result.decode("utf-8"))
-    return LEGOResponse(**{**result_dict, "metadata": Metadata(**result_dict.get("metadata"))})
+    result_str = result.decode("utf-8")
+
+    try:
+        result_dict = json.loads(result_str)
+    except json.JSONDecodeError as e:
+        raise LEGOError(f"Failed to parse response: {result_str}") from e
+
+    if not result_dict.get("success", False):
+        error_info: dict = result_dict.get("error", {})
+        err_source = error_info.get("type", "lego")
+        detail = error_info.get("detail", "Unknown error occurred")
+
+        subproblems = []
+        for sub_dict in error_info.get("subproblems", []):
+            identifier_dict = sub_dict.get("identifier", {})
+            subproblems.append(
+                Subproblem(
+                    type=sub_dict.get("type", ""),
+                    detail=sub_dict.get("detail", ""),
+                    identifier=Identifier(
+                        type=identifier_dict.get("type", ""),
+                        value=identifier_dict.get("value", ""),
+                    ),
+                )
+            )
+
+        info = dict(error_info)
+        raise LEGOError(
+            detail,
+            type="acme" if err_source == "acme" else "lego",
+            code=error_info.get("code", ""),
+            status=error_info.get("status"),
+            acme_type=error_info.get("acme_type", "") if err_source == "acme" else "",
+            subproblems=subproblems,
+            info=info,
+        )
+
+    data = result_dict.get("data", {})
+    return LEGOResponse(**{**data, "metadata": Metadata(**data.get("metadata", {}))})

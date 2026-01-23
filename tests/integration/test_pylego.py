@@ -93,22 +93,79 @@ class TestPyLego:
         )
         assert response.metadata.domain == "localhost"
 
-    def test_given_invalid_private_key_when_request_sent_then_error_raised(
+    def test_given_invalid_private_key_when_request_sent_then_error_structure_correct(
+        self,
+        configure_acme_server: dict[str, str | bytes],
+    ):
+        """Verify lego error structure has all expected fields populated correctly."""
+        with pytest.raises(LEGOError) as exc_info:
+            run_lego_command(
+                email="something@nowhere.com",
+                server="https://localhost:14000/dir",
+                csr=configure_acme_server.get("csr"),
+                env={
+                    "SSL_CERT_FILE": configure_acme_server.get("ca_path"),
+                    "HTTP01_PORT": "5002",
+                    "TLSALPN01_PORT": "5001",
+                },
+                private_key="whatever private key",
+            )
+        error = exc_info.value
+        assert error.type == "lego"
+        assert error.code == "invalid_private_key"
+        assert error.detail
+        assert error.acme_type == ""
+        assert error.status is None
+        assert f"[{error.code}]" in str(error)
+
+    def test_given_invalid_csr_when_request_sent_then_error_raised(
         self,
         configure_acme_server: dict[str, str | bytes],
     ):
         with pytest.raises(LEGOError):
             run_lego_command(
-            email="something@nowhere.com",
-            server="https://localhost:14000/dir",
-            csr=configure_acme_server.get("csr"),
-            env={
-                "SSL_CERT_FILE": configure_acme_server.get("ca_path"),
-                "HTTP01_PORT": "5002",
-                "TLSALPN01_PORT": "5001",
-            },
-            private_key="whatever private key",
+                email="something@nowhere.com",
+                server="https://localhost:14000/dir",
+                csr=b"invalid csr content",
+                env={
+                    "SSL_CERT_FILE": configure_acme_server.get("ca_path"),
+                    "HTTP01_PORT": "5002",
+                    "TLSALPN01_PORT": "5001",
+                },
             )
+
+    def test_given_invalid_dns_provider_when_request_sent_then_error_raised(
+        self,
+        configure_acme_server: dict[str, str | bytes],
+    ):
+        with pytest.raises(LEGOError):
+            run_lego_command(
+                email="something@nowhere.com",
+                server="https://localhost:14000/dir",
+                csr=configure_acme_server.get("csr"),
+                plugin="nonexistent_provider",
+                env={
+                    "SSL_CERT_FILE": configure_acme_server.get("ca_path"),
+                },
+            )
+
+    def test_given_negative_dns_propagation_wait_in_python_when_request_sent_then_value_error_raised(
+        self,
+        configure_acme_server: dict[str, str | bytes],
+    ):
+        with pytest.raises(ValueError) as exc_info:
+            run_lego_command(
+                email="something@nowhere.com",
+                server="https://localhost:14000/dir",
+                csr=configure_acme_server.get("csr"),
+                env={
+                    "SSL_CERT_FILE": configure_acme_server.get("ca_path"),
+                    "HTTP01_PORT": "5002",
+                    "TLSALPN01_PORT": "5001",
+                },
+                dns_propagation_wait=-1,
+            )
+        assert "cannot be negative" in str(exc_info.value)
 
 
 def poll_server(url: str, freq: int = 1, timeout: int = 60):
