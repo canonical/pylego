@@ -166,6 +166,7 @@ class TestPyLego:
                 dns_propagation_wait=-1,
             )
         assert "cannot be negative" in str(exc_info.value)
+
     def test_given_custom_dns_nameservers_when_request_sent_then_certificate_issued(
         self,
         configure_acme_server: dict[str, str | bytes],
