@@ -1,6 +1,6 @@
 [project]
 name = "pylego"
-version = "0.1.36"
+version = "0.1.37"
 authors = [
   { name="Canonical", email="telco-engineers@lists.canonical.com" },
 ]
@@ -25,7 +25,7 @@ Homepage = "https://github.com/canonical/pylego"
 Issues = "https://github.com/canonical/pylego/issues"
 
 [build-system]
-requires = ["setuptools>=80.10.2"]
+requires = ["setuptools>=82.0.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
