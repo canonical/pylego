@@ -140,7 +140,7 @@ wheels = [
 
 [[package]]
 name = "pylego"
-version = "0.1.41"
+version = "0.1.42"
 source = { editable = "." }
 
 [package.dev-dependencies]
