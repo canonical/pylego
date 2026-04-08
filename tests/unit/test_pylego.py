@@ -1,11 +1,11 @@
 """Unit tests for pylego dataclasses and error handling."""
 
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
-from pylego import LEGOError, LEGOResponse
+from pylego import LEGOError
 from pylego.pylego import Identifier, LEGOResponse, Metadata, Subproblem, run_lego_command
 
 
