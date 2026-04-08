@@ -16,6 +16,7 @@ classifiers = [
 [dependency-groups]
 dev = [
     "pytest",
+    "pytest-cov",
     "requests",
     "ruff"
 ]
