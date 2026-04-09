@@ -21,6 +21,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo snap install --classic astral-uv
+          sudo apt-get install -y python3-pytest
           uv venv
           uv pip install pytest pytest-cov pylint ruff
       - name: Build lego shared library

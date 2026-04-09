@@ -78,5 +78,17 @@ max-complexity = 10
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib"
 
+[tool.coverage.run]
+omit = [
+    "setup.py",
+    "tests/*",
+]
+
+[tool.coverage.report]
+omit = [
+    "setup.py",
+    "tests/*",
+]
+
 [tool.uv]
 package = true
