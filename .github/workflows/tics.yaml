@@ -13,23 +13,33 @@ jobs:
     runs-on: [self-hosted, linux, amd64, tiobe, jammy]
     steps:
       - uses: actions/checkout@v4
+      - name: Install Go
+        run: |
+          sudo snap install go --classic --channel=1.24/stable
+          echo "/snap/bin" >> "$GITHUB_PATH"
+          go version
       - name: Install dependencies
         run: |
           sudo snap install --classic astral-uv
           uv venv
-          uv pip install setuptools pytest pytest-cov pylint ruff
-          uv pip install --no-build-isolation --no-deps -e .
+          uv pip install pytest pytest-cov pylint ruff
+      - name: Build lego shared library
+        run: |
+          cd src/pylego
+          go build -o lego.so -buildmode=c-shared lego.go
       - name: Generate code coverage
         run: |
-          uv run pytest tests/unit --cov=src --cov-report=xml:cobertura.xml || true
-          mkdir -p .coverage
-          mv cobertura.xml .coverage/cobertura.xml || true
+          PYTHONPATH=src .venv/bin/python -m pytest tests/unit --cov=src --cov-report=xml:coverage.xml || true
+      - name: Move results to necessary folder for TICS
+        run: |
+          mkdir -p .cover
+          if [ -f coverage.xml ]; then mv coverage.xml .cover/coverage.xml; fi
       - name: Run TICS analysis
         uses: tiobe/tics-github-action@v3
         with:
           mode: qserver
           project: pylego
           branchdir: .
-          viewerUrl: https://canonical.tiobe.com/tiobeweb/TICS/api/cfg?name=default
+          viewerUrl: https://canonical.tiobe.com/tiobeweb/TICS/api/cfg?name=GoProjects
           ticsAuthToken: ${{ secrets.TICSAUTHTOKEN }}
           installTics: true
