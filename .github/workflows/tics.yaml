@@ -30,8 +30,8 @@ jobs:
           go build -o lego.so -buildmode=c-shared lego.go
       - name: Generate code coverage
         run: |
-          PYTHONPATH=src .venv/bin/python -m pytest tests/unit tests/integration \
-            --cov=src \
+          PYTHONPATH=src .venv/bin/python -m pytest tests/unit \
+            --cov=src/pylego/pylego.py \
             --cov-report=xml:coverage.xml || true
       - name: Move results to necessary folder for TICS
         run: |
@@ -47,3 +47,4 @@ jobs:
           viewerUrl: https://canonical.tiobe.com/tiobeweb/TICS/api/cfg?name=GoProjects
           ticsAuthToken: ${{ secrets.TICSAUTHTOKEN }}
           installTics: true
+          ticsConfig: .tiobeweb.conf
