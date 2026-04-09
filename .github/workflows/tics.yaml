@@ -22,7 +22,7 @@ jobs:
         env:
           PYTHONPATH: src
         run: |
-          uv run --no-project pytest tests/unit --cov=src --cov-report=xml:cobertura.xml || true
+          uv run pytest tests/unit --cov=src --cov-report=xml:cobertura.xml || true
           mkdir -p .coverage
           mv cobertura.xml .coverage/cobertura.xml || true
       - name: Run TICS analysis
