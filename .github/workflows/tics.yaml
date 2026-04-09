@@ -30,12 +30,12 @@ jobs:
           go build -o lego.so -buildmode=c-shared lego.go
       - name: Generate code coverage
         run: |
-          PYTHONPATH=src .venv/bin/python -m pytest tests/unit \
-            --cov=src/pylego/pylego.py \
-            --cov-report=xml:coverage.xml || true
-      - name: Verify coverage was generated
+          PYTHONPATH=src .venv/bin/python -m pytest tests/unit --cov=src --cov-report=xml:coverage.xml || true
+      - name: Move results to necessary folder for TICS
         run: |
-          ls -lah coverage.xml || echo "coverage.xml not found"
+          mkdir -p .cover
+          if [ -f coverage.xml ]; then mv coverage.xml .cover/coverage.xml; fi
+          ls -l .cover/ || echo ".cover/ is empty or missing"
       - name: Run TICS analysis
         uses: tiobe/tics-github-action@v3
         with:
@@ -45,8 +45,4 @@ jobs:
           viewerUrl: https://canonical.tiobe.com/tiobeweb/TICS/api/cfg?name=GoProjects
           ticsAuthToken: ${{ secrets.TICSAUTHTOKEN }}
           installTics: true
-          additionalFlags: |
-            -cov coverage.xml
-            -includeFile:*.py
-            -skipFile:setup.py
-            -skipFile:*.go
+          filelist: .tics.filelist
