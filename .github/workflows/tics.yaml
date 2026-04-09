@@ -33,11 +33,9 @@ jobs:
           PYTHONPATH=src .venv/bin/python -m pytest tests/unit \
             --cov=src/pylego/pylego.py \
             --cov-report=xml:coverage.xml || true
-      - name: Move results to necessary folder for TICS
+      - name: Verify coverage was generated
         run: |
-          mkdir -p .cover
-          if [ -f coverage.xml ]; then mv coverage.xml .cover/coverage.xml; fi
-          ls -l .cover/ || echo ".cover/ is empty or missing"
+          ls -lah coverage.xml || echo "coverage.xml not found"
       - name: Run TICS analysis
         uses: tiobe/tics-github-action@v3
         with:
@@ -47,4 +45,8 @@ jobs:
           viewerUrl: https://canonical.tiobe.com/tiobeweb/TICS/api/cfg?name=GoProjects
           ticsAuthToken: ${{ secrets.TICSAUTHTOKEN }}
           installTics: true
-          ticsConfig: .tiobeweb.conf
+          additionalFlags: |
+            -cov coverage.xml
+            -includeFile:*.py
+            -skipFile:setup.py
+            -skipFile:*.go
