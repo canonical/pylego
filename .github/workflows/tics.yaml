@@ -30,7 +30,9 @@ jobs:
           go build -o lego.so -buildmode=c-shared lego.go
       - name: Generate code coverage
         run: |
-          PYTHONPATH=src .venv/bin/python -m pytest tests/unit --cov=src --cov-report=xml:coverage.xml || true
+          PYTHONPATH=src .venv/bin/python -m pytest tests/unit tests/integration \
+            --cov=src \
+            --cov-report=xml:coverage.xml || true
       - name: Move results to necessary folder for TICS
         run: |
           mkdir -p .cover
