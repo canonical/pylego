@@ -1,6 +1,6 @@
 [project]
 name = "pylego"
-version = "0.1.42"
+version = "0.1.43"
 authors = [
   { name="Canonical", email="telco-engineers@lists.canonical.com" },
 ]
@@ -16,6 +16,7 @@ classifiers = [
 [dependency-groups]
 dev = [
     "pytest",
+    "pytest-cov",
     "requests",
     "ruff"
 ]
@@ -73,6 +74,9 @@ per-file-ignores = {"tests/*" = ["D100","D101","D102","D103","D104"]}
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
+
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"
 
 [tool.uv]
 package = true
