@@ -19,12 +19,12 @@ jobs:
           uv venv
           uv pip install pytest pytest-cov pylint ruff
       - name: Generate code coverage
-        env:
-          PYTHONPATH: src
         run: |
-          uv run pytest tests/unit --cov=src --cov-report=xml:cobertura.xml || true
-          mkdir -p .coverage
-          mv cobertura.xml .coverage/cobertura.xml || true
+          PYTHONPATH=src .venv/bin/python -m pytest tests/unit --cov=src --cov-report=xml:coverage.xml || true
+      - name: Move results to necessary folder for TICS
+        run: |
+          mkdir -p cover
+          mv coverage.xml cover/coverage.xml
       - name: Run TICS analysis
         uses: tiobe/tics-github-action@v3
         with:
