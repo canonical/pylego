@@ -13,18 +13,26 @@ jobs:
     runs-on: [self-hosted, linux, amd64, tiobe, jammy]
     steps:
       - uses: actions/checkout@v4
+      - name: Install Go
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y golang-go
       - name: Install dependencies
         run: |
           sudo snap install --classic astral-uv
           uv venv
           uv pip install pytest pytest-cov pylint ruff
+      - name: Build lego shared library
+        run: |
+          cd src/pylego
+          go build -o lego.so -buildmode=c-shared lego.go
       - name: Generate code coverage
         run: |
           PYTHONPATH=src .venv/bin/python -m pytest tests/unit --cov=src --cov-report=xml:coverage.xml || true
       - name: Move results to necessary folder for TICS
         run: |
           mkdir -p cover
-          mv coverage.xml cover/coverage.xml
+          if [ -f coverage.xml ]; then mv coverage.xml cover/coverage.xml; fi
       - name: Run TICS analysis
         uses: tiobe/tics-github-action@v3
         with:
