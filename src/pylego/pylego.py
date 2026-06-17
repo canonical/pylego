@@ -92,6 +92,8 @@ def run_lego_command(
     private_key: str = "",
     dns_propagation_wait: int | None = None,
     dns_nameservers: list[str] | None = None,
+    eab_kid: str | None = None,
+    eab_hmac: str | None = None,
 ) -> LEGOResponse:
     """Run an arbitrary command in the Lego application. Read more at https://go-acme.github.io.
 
@@ -106,12 +108,19 @@ def run_lego_command(
         dns_propagation_wait: optional wait duration for DNS propagation, in seconds (int).
         dns_nameservers: optional list of DNS nameserver addresses to use for DNS-01 challenge verification.
             Can include ports (e.g., ["8.8.8.8:53", "8.8.4.4:53"]) or just IP addresses (port 53 assumed).
+        eab_kid: External Account Binding key identifier, as provided by the CA dashboard.
+            Must be supplied together with eab_hmac; providing only one raises a ValueError.
+        eab_hmac: External Account Binding HMAC key (base64url-encoded, no padding), as provided by
+            the CA dashboard.  Must be supplied together with eab_kid; providing only one raises a ValueError.
     """
     library.RunLegoCommand.restype = ctypes.c_char_p
     library.RunLegoCommand.argtypes = [ctypes.c_char_p]
 
     if dns_propagation_wait is not None and dns_propagation_wait < 0:
         raise ValueError("dns_propagation_wait cannot be negative")
+
+    if (eab_kid is None) != (eab_hmac is None):
+        raise ValueError("eab_kid and eab_hmac must both be provided or both omitted")
 
     payload = {
         "email": email,
@@ -125,6 +134,10 @@ def run_lego_command(
         payload["dns_propagation_wait"] = dns_propagation_wait
     if dns_nameservers is not None:
         payload["dns_nameservers"] = dns_nameservers
+    if eab_kid is not None:
+        payload["eab_kid"] = eab_kid
+    if eab_hmac is not None:
+        payload["eab_hmac"] = eab_hmac
 
     message = bytes(
         json.dumps(payload),

@@ -52,6 +52,8 @@ type LegoInputArgs struct {
 	Env                map[string]string
 	DNSPropagationWait int      `json:"dns_propagation_wait,omitempty"`
 	DNSNameservers     []string `json:"dns_nameservers,omitempty"`
+	EABKid             string   `json:"eab_kid,omitempty"`
+	EABHmac            string   `json:"eab_hmac,omitempty"`
 }
 
 type LegoOutputResponse struct {
@@ -260,14 +262,14 @@ func RunLegoCommand(message *C.char) *C.char {
 		}
 
 	}
-	certificate, err := requestCertificate(CLIArgs.Email, CLIArgs.PrivateKey, CLIArgs.Server, CLIArgs.CSR, CLIArgs.Plugin, CLIArgs.DNSPropagationWait, CLIArgs.DNSNameservers)
+	certificate, err := requestCertificate(CLIArgs.Email, CLIArgs.PrivateKey, CLIArgs.Server, CLIArgs.CSR, CLIArgs.Plugin, CLIArgs.DNSPropagationWait, CLIArgs.DNSNameservers, CLIArgs.EABKid, CLIArgs.EABHmac)
 	if err != nil {
 		return buildErrorResponse(err, ErrCertificateRequestFailed)
 	}
 	return buildSuccessResponse(certificate)
 }
 
-func requestCertificate(email, privateKeyPem, server, csr, plugin string, propagationWait int, nameservers []string) (*LegoOutputResponse, error) {
+func requestCertificate(email, privateKeyPem, server, csr, plugin string, propagationWait int, nameservers []string, eabKid, eabHmac string) (*LegoOutputResponse, error) {
 	var privateKey crypto.PrivateKey
 	if privateKeyPem != "" {
 		parsedKey, err := certcrypto.ParsePEMPrivateKey([]byte(privateKeyPem))
@@ -301,7 +303,16 @@ func requestCertificate(email, privateKeyPem, server, csr, plugin string, propag
 		return nil, wrapWithContext(err, ErrDNSProviderFailed)
 	}
 
-	reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
+	var reg *registration.Resource
+	if eabKid != "" && eabHmac != "" {
+		reg, err = client.Registration.RegisterWithExternalAccountBinding(registration.RegisterEABOptions{
+			TermsOfServiceAgreed: true,
+			Kid:                  eabKid,
+			HmacEncoded:          eabHmac,
+		})
+	} else {
+		reg, err = client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
+	}
 	if err != nil {
 		return nil, wrapWithContext(err, ErrAccountRegistrationFailed)
 	}
