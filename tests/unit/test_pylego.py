@@ -212,3 +212,71 @@ class TestRunLegoCommand:
         payload = json.loads(call_args)
         assert payload["dns_propagation_wait"] == 60
         assert payload["dns_nameservers"] == ["8.8.8.8:53"]
+
+    @patch("pylego.pylego.library")
+    def test_given_eab_kid_and_hmac_when_running_command_then_both_included_in_payload(self, mock_library):
+        mock_library.RunLegoCommand.return_value = json.dumps({
+            "success": True,
+            "data": {
+                "csr": "c", "private_key": "k", "certificate": "cert",
+                "issuer_certificate": "i",
+                "metadata": {"stable_url": "s", "url": "u", "domain": "d"},
+            },
+        }).encode()
+
+        run_lego_command(
+            email="e@e.com",
+            server="https://s",
+            csr=b"csr",
+            env={},
+            eab_kid="my-kid-123",
+            eab_hmac="bXktaG1hYy1rZXk",
+        )
+
+        call_args = mock_library.RunLegoCommand.call_args[0][0]
+        payload = json.loads(call_args)
+        assert payload["eab_kid"] == "my-kid-123"
+        assert payload["eab_hmac"] == "bXktaG1hYy1rZXk"
+
+    @patch("pylego.pylego.library")
+    def test_given_no_eab_when_running_command_then_eab_keys_absent_from_payload(self, mock_library):
+        mock_library.RunLegoCommand.return_value = json.dumps({
+            "success": True,
+            "data": {
+                "csr": "c", "private_key": "k", "certificate": "cert",
+                "issuer_certificate": "i",
+                "metadata": {"stable_url": "s", "url": "u", "domain": "d"},
+            },
+        }).encode()
+
+        run_lego_command(
+            email="e@e.com",
+            server="https://s",
+            csr=b"csr",
+            env={},
+        )
+
+        call_args = mock_library.RunLegoCommand.call_args[0][0]
+        payload = json.loads(call_args)
+        assert "eab_kid" not in payload
+        assert "eab_hmac" not in payload
+
+    def test_given_only_eab_kid_when_running_command_then_value_error_raised(self):
+        with pytest.raises(ValueError, match="eab_kid and eab_hmac must both be provided or both omitted"):
+            run_lego_command(
+                email="e@e.com",
+                server="https://s",
+                csr=b"csr",
+                env={},
+                eab_kid="my-kid-123",
+            )
+
+    def test_given_only_eab_hmac_when_running_command_then_value_error_raised(self):
+        with pytest.raises(ValueError, match="eab_kid and eab_hmac must both be provided or both omitted"):
+            run_lego_command(
+                email="e@e.com",
+                server="https://s",
+                csr=b"csr",
+                env={},
+                eab_hmac="bXktaG1hYy1rZXk",
+            )
