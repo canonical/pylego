@@ -12,7 +12,7 @@ jobs:
   analyze:
     runs-on: [self-hosted, linux, amd64, tiobe, jammy]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install Go
         run: |
           sudo snap install go --classic --channel=1.24/stable
