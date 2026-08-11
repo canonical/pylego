@@ -6,6 +6,9 @@ on:
       PYPI_API_TOKEN:
         required: true
 
+permissions:
+  contents: read
+
 jobs:
   upload-package:
     runs-on: ubuntu-latest

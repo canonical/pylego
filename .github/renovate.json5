@@ -1,22 +1,13 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: [
-    "config:recommended",
-    ":disableRateLimiting",
-    ":noUnscheduledUpdates",
-    ":semanticCommits",
+    "github>canonical/identity-credentials-workflows//renovate.json5#v3.1.3",
   ],
-  automerge: true,
-  automergeStrategy: "squash",
-  automergeType: "pr",
-  platformAutomerge: true,
-  schedule: ["after 1am and before 3am on monday"],
-  timezone: "Etc/UTC",
-  enabledManagers: ["github-actions", "gomod", "pep621"],
+  enabledManagers: ["pep621", "github-actions", "gomod"],
+  bumpVersion: "patch",
   packageRules: [
     {
       matchManagers: ["github-actions"],
-      groupName: "github_actions",
       commitMessagePrefix: "chore: ",
     },
     {
@@ -25,16 +16,5 @@
       groupName: "go_dependencies",
       commitMessagePrefix: "chore: ",
     },
-    {
-      matchManagers: ["pep621"],
-      rangeStrategy: "bump",
-      groupName: "Python dependencies",
-    },
-    {
-      // Disable updating Python, should be done when updating the Ubuntu base
-      matchPackageNames: ["python"],
-      enabled: false,
-    },
   ],
-  bumpVersion: "patch",
 }
