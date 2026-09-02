@@ -2,7 +2,7 @@ module github.com/canonical/pylego
 
 go 1.24.0
 
-toolchain go1.26.1
+toolchain go1.27.1
 
 require github.com/go-acme/lego/v4 v4.32.0
 
