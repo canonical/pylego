@@ -37,7 +37,7 @@ jobs:
           if [ -f coverage.xml ]; then mv coverage.xml .cover/coverage.xml; fi
           ls -l .cover/ || echo ".cover/ is empty or missing"
       - name: Run TICS analysis
-        uses: tiobe/tics-github-action@v3
+        uses: tiobe/tics-github-action@v4
         with:
           mode: qserver
           project: pylego
