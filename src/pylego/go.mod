@@ -4,7 +4,7 @@ go 1.24.0
 
 toolchain go1.26.1
 
-require github.com/go-acme/lego/v4 v4.32.0
+require github.com/go-acme/lego/v4 v4.34.0
 
 require (
 	cloud.google.com/go/auth v0.18.1 // indirect
