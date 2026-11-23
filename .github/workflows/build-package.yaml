@@ -7,11 +7,21 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-26.04
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        runner:
+          - ubuntu-26.04
+          - ubuntu-26.04-arm
     steps:
     - name: checkout
-      uses: actions/checkout@v7
-    - name: Install uv
-      run: sudo snap install --classic astral-uv
-    - name: Build package
-      run: uv build
+      uses: canonical/identity-credentials-workflows/.github/actions/prepare@v3.2.0
+      with:
+        workflows-ref: v3.2.0
+    - name: Set up Go and Python toolchains
+      uses: canonical/identity-credentials-workflows/.github/actions/setup-toolchains@v3.2.0
+      with:
+        toolchains: go python
+        go-version: latest
+    - name: Build wheel
+      run: uv build --wheel

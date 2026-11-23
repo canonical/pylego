@@ -18,19 +18,23 @@ jobs:
       src_changed: ${{ steps.changed-files.outputs.src_changed }}
     steps:
       - name: checkout
-        uses: actions/checkout@v7
+        uses: canonical/identity-credentials-workflows/.github/actions/prepare@v3.2.0
+        with:
+          workflows-ref: v3.2.0
+      - name: Set up Go and Python toolchains
+        uses: canonical/identity-credentials-workflows/.github/actions/setup-toolchains@v3.2.0
+        with:
+          toolchains: go python
+          go-version: latest
       - name: install letsencrypt/pebble
         working-directory: tests/integration
         run: |
-          sudo snap install go --classic
-
           git clone https://github.com/letsencrypt/pebble.git
           cd pebble
           git reset ad9e5bba53b05abd18ee896434226db85a391285
           go install ./cmd/pebble
       - name: install pylego
         run: |
-          sudo snap install --classic astral-uv
           uv sync --dev 
       - name: lint python
         run: |
@@ -45,7 +49,7 @@ jobs:
           files=$(gh pr view ${{ github.event.pull_request.number }} --json files --jq '.files[].path' || true)
           echo "Files changed:"
           echo "$files"
-          if echo "$files" | grep -Eq "^(src/|pyproject\\.toml|uv\\.lock)"; then
+          if echo "$files" | grep -Eq "^(src/|setup\\.py|pyproject\\.toml|uv\\.lock)"; then
             echo "src_changed=true" >> $GITHUB_OUTPUT
           else
             echo "src_changed=false" >> $GITHUB_OUTPUT

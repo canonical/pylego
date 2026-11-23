@@ -77,13 +77,13 @@ Golang supports building a shared c library from its CLI build tool. We import a
 
 The output binary, `lego.so`, is installed alongside pylego, and pylego exposes a python function called run_lego_command that will convert the arguments into a JSON message, and send it to LEGO.
 
-On `pip install`, setuptools attempts to build this binary by running the command
+When installing from a source distribution, setuptools attempts to build this binary by running the command
 
 ```
 go build -o lego.so -buildmode=c-shared lego.go
 ```
 
-If we don't have a .whl that supports your environment, you will need to have Go installed and configured for Python to be able to build this binary.
+The project builds platform-specific wheels for Linux x86-64 and ARM64. If a wheel is not available for your environment, install from the source distribution with Go and a C toolchain installed so that setuptools can build the shared library.
 
 ## License
 
