@@ -10,31 +10,79 @@ permissions:
   contents: read
 
 jobs:
-  upload-package:
-    runs-on: ubuntu-latest
+  build-wheel:
+    strategy:
+      matrix:
+        runner:
+          - ubuntu-26.04
+          - ubuntu-26.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: canonical/identity-credentials-workflows/.github/actions/prepare@v3.2.0
         with:
-          python-version: "3.15"
+          workflows-ref: v3.2.0
 
-      - name: Install dependencies
-        run: |
-          sudo snap install --classic astral-uv
+      - name: Set up Go and Python toolchains
+        uses: canonical/identity-credentials-workflows/.github/actions/setup-toolchains@v3.2.0
+        with:
+          toolchains: go python
+          go-version: latest
 
-      - name: Build package
-        run: |
-          uv build
+      - name: Build wheel
+        run: uv build --wheel
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-${{ matrix.runner }}
+          path: dist/*.whl
+          if-no-files-found: error
+
+  build-sdist:
+    runs-on: ubuntu-26.04
+    steps:
+      - name: Check out repository
+        uses: canonical/identity-credentials-workflows/.github/actions/prepare@v3.2.0
+        with:
+          workflows-ref: v3.2.0
+
+      - name: Set up Python toolchain
+        uses: canonical/identity-credentials-workflows/.github/actions/setup-toolchains@v3.2.0
+        with:
+          toolchains: python
+
+      - name: Build source distribution
+        run: uv build --sdist
+
+      - name: Upload source distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-distribution
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  upload-package:
+    needs: [build-wheel, build-sdist]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python toolchain
+        uses: canonical/identity-credentials-workflows/.github/actions/setup-toolchains@v3.2.0
+        with:
+          toolchains: python
+
+      - name: Download package distributions
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
 
       - name: Publish package to PyPI
         env:
           UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
         run: |
           set +e
-          OUTPUT=$(uv publish 2>&1)
+          OUTPUT=$(uv publish dist/* 2>&1)
           STATUS=$?
           set -e
           echo "$OUTPUT"
